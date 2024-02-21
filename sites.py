@@ -408,16 +408,22 @@ class {class_name}(scrapy.Spider):
     output_folder = r'C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans\\{save_folder}'
 
 
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super({class_name}, cls).from_crawler(crawler, *args, **kwargs)
+        crawler.signals.connect(spider.spider_closed, signal=signals.spider_closed)
+        return spider
+
     def __init__(self):
 
         self.matched_links = []  # Store matched links
         self.pdf_links = []  # Store PDF links
-        dispatcher.connect(self.spider_closed, signals.spider_closed)
+    
 
     def parse(self, response):
 
         # Regular expression pattern for URLs within access.sfsu.edu domain
-        access_url_pattern = re.compile(r'https:{site_url}/.*')
+        access_url_pattern = re.compile(r'https://{site_url}/.*')
         # Pattern specifically for box.com links
         box_url_pattern = re.compile(r'https?://sfsu.box.com/s/.*')
 
