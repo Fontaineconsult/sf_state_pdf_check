@@ -21,4 +21,4 @@ FROM
         JOIN
     pdf_report ON drupal_pdf_files.file_hash = pdf_report.pdf_hash
 WHERE
-    drupal_site.domain_name = 'aac.sfsu.edu';
+    drupal_site.domain_name = '{site_name}';

@@ -5,6 +5,7 @@ import subprocess
 
 from data_import import add_pdf_file_to_database, get_site_id_by_domain_name
 from pdf_priority import violation_counter, pdf_check, pdf_status
+from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import box_share_pattern_match, download_from_box
 
 
 def download_pdf_into_memory(url):
@@ -14,16 +15,22 @@ def download_pdf_into_memory(url):
 
 def create_verapdf_report(url):
     print(os.environ['PATH'])
-    pdf_download = download_pdf_into_memory(url)
 
     temp_pdf_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp.pdf"
     temp_profile_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp_profile.json"
 
 
+    if box_share_pattern_match(url):
 
+        if not download_from_box(url):
+            print("box Download failed")
+            return {"report": {"report": "", "status": "Failed"}}
 
-    with open(temp_pdf_path, "wb") as f:
-        f.write(pdf_download)
+    else:
+        pdf_download = download_pdf_into_memory(url)
+
+        with open(temp_pdf_path, "wb") as f:
+            f.write(pdf_download)
 
     try:
         verapdf_command = f'verapdf -f ua1 --format json "{temp_pdf_path}" > "{temp_profile_path}"'
@@ -40,7 +47,6 @@ def create_verapdf_report(url):
         return {"report": {"report": violations, "status": "Succeeded"}}
     except KeyError as e:
         return {"report": {"report": "", "status": "Failed"}}
-
 
 
 
@@ -83,5 +89,3 @@ def full_pdf_scan(site_folders):
 
 
 
-
-full_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans")
