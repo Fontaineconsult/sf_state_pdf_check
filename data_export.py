@@ -5,6 +5,23 @@ from openpyxl.styles import Font
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
 
+
+def get_all_sites():
+
+    with open("get_all_sites.sql", 'r') as file:
+        sql_query = file.read()
+        conn = sqlite3.connect("drupal_pdfs.db")
+        cursor = conn.cursor()
+        cursor.execute(sql_query)
+        results = cursor.fetchall()
+        results = [result[0] for result in results]
+
+        if not results:
+            return []
+        return results
+
+
+
 def get_pdfs_by_site_name(site_name):
 
     with open("get_pdf_reports_by_site_name.sql", 'r') as file:
@@ -109,4 +126,3 @@ def write_data_to_excel(data, file_name="output.xlsx"):
 
 
 
-write_data_to_excel(get_pdfs_by_site_name("access.sfsu.edu"))
