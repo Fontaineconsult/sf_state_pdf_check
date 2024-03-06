@@ -59,9 +59,6 @@ CREATE TABLE IF NOT EXISTS pdf_report (
 
 
 
-
-
-
 create_site_assignment = """
 CREATE TABLE IF NOT EXISTS site_assignment (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,8 +71,20 @@ CREATE TABLE IF NOT EXISTS site_assignment (
 """
 
 
+create_report_failure = """
 
+CREATE TABLE IF NOT EXISTS failure (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id INTEGER NOT NULL,
+    pdf_id TEXT NOT NULL,
+    error_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    error_message TEXT NOT NULL,
+    FOREIGN KEY (site_id) REFERENCES drupal_site(id),
+    FOREIGN KEY (pdf_id) REFERENCES drupal_pdf_files(id)
 
+);
+
+"""
 
 
 
@@ -85,6 +94,7 @@ CREATE TABLE IF NOT EXISTS site_assignment (
 # cursor.execute(create_site_table)
 # cursor.execute(create_site_user)
 # cursor.execute(create_site_assignment)
+# cursor.execute(create_report_failure)
 #
 #
 # # Commit the changes and close the connection

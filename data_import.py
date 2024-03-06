@@ -112,6 +112,29 @@ def add_employee_and_site_assignments_from_csv_file(file_path):
             conn.commit()
         conn.close()
 
+
+
+def check_if_pdf_file_exists(pdf_uri, parent_uri, drupal_site_id, pdf_hash):
+
+    conn = sqlite3.connect('drupal_pdfs.db')
+    cursor = conn.cursor()
+
+    exists = cursor.execute("SELECT * FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ? AND drupal_site_id = ? AND file_hash = ?",
+                   (pdf_uri, parent_uri, drupal_site_id, pdf_hash)).fetchone()
+
+    conn.close()
+
+    return True if exists else False
+
+
+def get_site_id_from_domain_name(domain_name):
+    conn = sqlite3.connect('drupal_pdfs.db')
+    cursor = conn.cursor()
+    site_id = cursor.execute("SELECT id FROM drupal_site WHERE domain_name = ?", (domain_name,)).fetchone()
+    conn.close()
+    return site_id[0] if site_id else None
+
+
 def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict):
     # Define the connection and cursor
     conn = sqlite3.connect('drupal_pdfs.db')
@@ -219,3 +242,54 @@ def get_site_id_by_domain_name(domain_name):
     conn.close()
     return site_id[0] if site_id else None
 
+
+
+
+def check_if_pdf_report_exists(pdf_uri, parent_uri):
+
+    # first check if a pdf exists with the pdf_uri and parent_uri
+    conn = sqlite3.connect('drupal_pdfs.db')
+    cursor = conn.cursor()
+    pdf_file = cursor.execute("SELECT * FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ?", (pdf_uri, parent_uri)).fetchone()
+
+
+
+    if pdf_file:
+        # if a pdf exists, check if a report exists for the pdf
+        pdf_hash = pdf_file[5]
+        report = cursor.execute("SELECT * FROM pdf_report WHERE pdf_hash = ?", (pdf_hash,)).fetchone()
+        if report:
+            conn.close()
+            return True
+    conn.close()
+    return False
+
+
+def add_pdf_report_failure(pdf_uri, parent_uri, site_id, error_message):
+
+        conn = sqlite3.connect('drupal_pdfs.db')
+        cursor = conn.cursor()
+
+        # get pdf_id from pdf table with pdf_uri and parent_uri
+        print("AADDDINNGG ERRRORRRR")
+        print(pdf_uri, parent_uri, site_id, error_message)
+
+        pdf_id = cursor.execute("SELECT * FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ?", (pdf_uri, parent_uri)).fetchone()
+        print(pdf_id)
+        if pdf_id:
+            pdf_id = pdf_id[0]
+
+            # add record to failure table
+            cursor.execute("INSERT INTO failure (site_id, pdf_id, error_message) VALUES (?, ?, ?)", (site_id, pdf_id, error_message))
+            conn.commit()
+            conn.close()
+        else:
+            cursor.execute("INSERT INTO failure (site_id, pdf_uri, error_message) VALUES (?, ?, ?)", (site_id, pdf_uri, error_message))
+            conn.commit()
+            conn.close()
+            print("No PDF in system add raw failure")
+
+
+
+add_pdf_report_failure("https://sfsu.app.box.com/s/wut5kc1zkmdwwmcm3chjbfd14m6tpsyf",
+                       "https://aac.sfsu.edu/aac-research-and-innovation", 1, "PDF report failed to generate")

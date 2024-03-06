@@ -1,51 +1,47 @@
 import os
 import time
+from urllib.parse import urlparse, urlunparse, quote
+
 import requests
 import subprocess
 
-from data_import import add_pdf_file_to_database, get_site_id_by_domain_name
+from data_import import add_pdf_file_to_database, get_site_id_by_domain_name, check_if_pdf_report_exists, \
+    add_pdf_report_failure
 from pdf_priority import violation_counter, pdf_check, pdf_status
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import box_share_pattern_match, download_from_box
 
 
-def download_pdf_into_memory(url):
-    return requests.get(url).content
+temp_pdf_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp.pdf"
+temp_profile_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp_profile.json"
 
+def download_pdf_into_memory(url, loc, domain_id):
+
+    request = requests.get(url)
+
+    if request.ok:
+        return request.content
+    else:
+        add_pdf_report_failure(url, loc, domain_id, f"Couldn't download {request.status_code}")
+        return False
 
 
 def create_verapdf_report(url):
-    print(os.environ['PATH'])
-
-    temp_pdf_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp.pdf"
-    temp_profile_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp_profile.json"
-
-
-    if box_share_pattern_match(url):
-
-        if not download_from_box(url):
-            print("box Download failed")
-            return {"report": {"report": "", "status": "Failed"}}
-
-    else:
-        pdf_download = download_pdf_into_memory(url)
-
-        with open(temp_pdf_path, "wb") as f:
-            f.write(pdf_download)
 
     try:
         verapdf_command = f'verapdf -f ua1 --format json "{temp_pdf_path}" > "{temp_profile_path}"'
 
         # Execute the command and capture the output
         try:
-            subprocess.run(verapdf_command, shell=True, check=True)
+            subprocess.run(verapdf_command, shell=True, text=True, capture_output=True)
         except subprocess.CalledProcessError as e:
+            print("Failed to create report", url, e)
             print(e.output)
 
         violations = violation_counter(temp_profile_path)
         violations.update(pdf_check(temp_pdf_path))
-        print(violations)
         return {"report": {"report": violations, "status": "Succeeded"}}
     except KeyError as e:
+        print("Failed to create report", url, e)
         return {"report": {"report": "", "status": "Failed"}}
 
 
@@ -67,24 +63,59 @@ def scan_pdfs(directory, domain_id):
     pdf_locations = loop_through_files_in_folder(directory)
 
 
+
     for file in pdf_locations:
-        file, loc = file.rstrip(" ").split(" ")
-        report = create_verapdf_report(file)
 
-        if report["report"]["status"] == "Succeeded":
+        try:
+            file_url, loc = file.rstrip(" ").split(" ")
+            # parsed_url = urlparse(file_url)
+            # encoded_path = quote(parsed_url.path)
+            # file_url = urlunparse(parsed_url._replace(path=encoded_path))
+            report_exsits = check_if_pdf_report_exists(file_url, loc)
+            print("report exists", report_exsits)
+        except ValueError as e:
+            add_pdf_report_failure("file_url", "loc", domain_id, "Couldn't unpack file url and location")
+            continue
 
-            add_pdf_file_to_database(file, loc, domain_id, report["report"]["report"])
+
+        if not report_exsits:
+            if box_share_pattern_match(file_url):
+                print("Downloading File From Box")
 
 
+                box_download = download_from_box(file_url, loc, domain_id)
 
+                if not box_download[0]:
+                    print("Box Download failed", file_url)
+                    add_pdf_report_failure(file_url, loc, domain_id, box_download[1])
+
+
+            else:
+                pdf_download = download_pdf_into_memory(file_url,loc, domain_id)
+                if pdf_download:
+
+                    with open(temp_pdf_path, "wb") as f:
+                        f.write(pdf_download)
+                else:
+                    continue
+
+            report = create_verapdf_report(file_url)
+
+            if report["report"]["status"] == "Succeeded":
+
+                add_pdf_file_to_database(file_url, loc, domain_id, report["report"]["report"])
+            else:
+                add_pdf_report_failure(file_url, loc, domain_id, report["report"]["report"])
+
+        else:
+            print("Report already exists", file_url)
+            continue
 def full_pdf_scan(site_folders):
-    print("f")
+
     # get all folders in the site_folders directory
     for folder in os.listdir(site_folders):
         domain_id = get_site_id_by_domain_name(folder)
         if domain_id is not None:
-
-            print(os.path.join(site_folders, folder), domain_id)
             scan_pdfs(os.path.join(site_folders, folder), domain_id)
 
 
