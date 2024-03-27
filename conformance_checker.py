@@ -62,8 +62,6 @@ def loop_through_files_in_folder(folder_path):
 def scan_pdfs(directory, domain_id):
     pdf_locations = loop_through_files_in_folder(directory)
 
-
-
     for file in pdf_locations:
 
         try:
@@ -77,19 +75,14 @@ def scan_pdfs(directory, domain_id):
             add_pdf_report_failure("file_url", "loc", domain_id, "Couldn't unpack file url and location")
             continue
 
-
         if not report_exsits:
             if box_share_pattern_match(file_url):
                 print("Downloading File From Box")
-
-
                 box_download = download_from_box(file_url, loc, domain_id)
 
                 if not box_download[0]:
                     print("Box Download failed", file_url)
                     add_pdf_report_failure(file_url, loc, domain_id, box_download[1])
-
-
             else:
                 pdf_download = download_pdf_into_memory(file_url,loc, domain_id)
                 if pdf_download:

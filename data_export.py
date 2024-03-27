@@ -1,10 +1,11 @@
 import sqlite3
 from collections import namedtuple
 from openpyxl import Workbook
-from openpyxl.styles import Font
+from openpyxl.styles import Font, PatternFill
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
 from data_import import get_site_id_from_domain_name
+from filters import check_for_node, is_high_priority
 
 
 def get_all_sites():
@@ -29,7 +30,6 @@ def get_pdfs_by_site_name(site_name):
     with open("sql/get_pdf_reports_by_site_name.sql", 'r') as file:
         sql_query = file.read()
         formatted_query = sql_query.format(site_name=site_name)
-        print(formatted_query)
 
         conn = sqlite3.connect("drupal_pdfs.db")
         cursor = conn.cursor()
@@ -57,6 +57,22 @@ def get_pdfs_by_site_name(site_name):
 
 
 
+def get_all_users_with_pdfs():
+    with open("sql/get_all_users_with_pdf_files.sql", 'r') as file:
+        sql_query = file.read()
+        conn = sqlite3.connect("drupal_pdfs.db")
+        cursor = conn.cursor()
+        cursor.execute(sql_query)
+        results = cursor.fetchall()
+        results = [result for result in results]
+
+        if not results:
+            return []
+        return results
+
+
+
+
 
 def get_site_failures(site_name):
 
@@ -66,16 +82,9 @@ def get_site_failures(site_name):
         # need to get site id from site name
 
         site_id = get_site_id_from_domain_name(site_name.replace("-", "."))
-
-
-
         formatted_query = sql_query.format(site_id=site_id)
-
-
         conn = sqlite3.connect("drupal_pdfs.db")
         cursor = conn.cursor()
-
-
 
         cursor.execute(formatted_query)
         results = cursor.fetchall()
@@ -131,25 +140,33 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
         # Write the column headers to worksheet
         worksheet.append(columns)
 
+        # Define the fill color for high priority rows
+        red_fill = PatternFill(start_color='FF9999',  # This color code approximates "Red, Accent 2, Lighter 60%"
+                               end_color='FF9999',
+                               fill_type='solid')
+
         # Write the data rows to worksheet
         for item in data:
-            # Convert named tuple to a list to edit its values
             item_list = list(item)
-            item_list[3] = item_list[3][0:6]
-            item_list[2] = item_list[2].split(" ")[0]
+            high_priority = is_high_priority(item)
 
-            item_list[9] = "Yes" if item_list[9] == 1 else "No"
-            item_list[10] = "Yes" if item_list[10] == 1 else "No"
-            item_list[12] = "Yes" if item_list[12] == 1 else "No"
-            item_list[13] = "Yes" if item_list[13] == 1 else "No"
-            item_list.append(round(int(item[8]) / int(item[14])) if item[8] != 0 else 0)
+            if not check_for_node(item_list[1]):  # removes node urls
+                # Similar modifications as in your code...
+                item_list[9] = "Yes" if item_list[9] == 1 else "No"
+                item_list[10] = "Yes" if item_list[10] == 1 else "No"
+                item_list[12] = "Yes" if item_list[12] == 1 else "No"
+                item_list[13] = "Yes" if item_list[13] == 1 else "No"
+                item_list.append(round(int(item[8]) / int(item[14])) if item[8] != 0 else 0)
+                item_list[0] = f'=HYPERLINK("{item[0]}", "{item[0]}")'
+                item_list[1] = f'=HYPERLINK("{item[1]}", "{item[1]}")'
 
-            # Modify the URL fields directly with HYPERLINK formula
-            item_list[0] = f'=HYPERLINK("{item[0]}", "{item[0]}")'
-            item_list[1] = f'=HYPERLINK("{item[1]}", "{item[1]}")'
+                # Append the modified list of values to the worksheet
+                worksheet.append(item_list)
 
-            # Append the modified list of values to the worksheet
-            worksheet.append(item_list)
+                # If high_priority is True, apply red_fill to the entire row
+                if high_priority:
+                    for cell in worksheet[worksheet._current_row]:
+                        cell.fill = red_fill
 
         # Apply font styles for hyperlink columns in worksheet
         for row in worksheet.iter_rows(min_row=2, min_col=1, max_col=2, max_row=len(data) + 1):
@@ -163,8 +180,12 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
         table = Table(displayName="DataTable", ref=table_range)
 
         # Add a default style with striped rows and banded columns
-        style = TableStyleInfo(name="TableStyleMedium9", showFirstColumn=False,
-                               showLastColumn=False, showRowStripes=True, showColumnStripes=True)
+        style = TableStyleInfo(name="TableStyleMedium9",
+                               showFirstColumn=False,
+                               showLastColumn=False,
+                               showRowStripes=True,
+                               showColumnStripes=True)
+
         table.tableStyleInfo = style
 
         # Add the table to the worksheet
@@ -196,8 +217,12 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
         table = Table(displayName="FailureDataTable", ref=table_range)
 
         # Add a default style with striped rows and banded columns
-        style = TableStyleInfo(name="TableStyleMedium9", showFirstColumn=False,
-                               showLastColumn=False, showRowStripes=True, showColumnStripes=True)
+        style = TableStyleInfo(name="TableStyleMedium9",
+                               showFirstColumn=False,
+                               showLastColumn=False,
+                               showRowStripes=True,
+                               showColumnStripes=True)
+
         table.tableStyleInfo = style
 
         # Add the table to the worksheet

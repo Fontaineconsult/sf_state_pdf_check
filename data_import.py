@@ -53,6 +53,8 @@ def update_managers_boolean_in_site_user_table(csv_file_path):
 
 
 
+
+
 def add_sites_from_site_csv_file(file_path):
     conn = sqlite3.connect('drupal_pdfs.db')
     cursor = conn.cursor()
@@ -288,8 +290,3 @@ def add_pdf_report_failure(pdf_uri, parent_uri, site_id, error_message):
             conn.commit()
             conn.close()
             print("No PDF in system add raw failure")
-
-
-
-add_pdf_report_failure("https://sfsu.app.box.com/s/wut5kc1zkmdwwmcm3chjbfd14m6tpsyf",
-                       "https://aac.sfsu.edu/aac-research-and-innovation", 1, "PDF report failed to generate")
