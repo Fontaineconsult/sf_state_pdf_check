@@ -52,9 +52,6 @@ def update_managers_boolean_in_site_user_table(csv_file_path):
     print("Managers updated successfully.")
 
 
-
-
-
 def add_sites_from_site_csv_file(file_path):
     conn = sqlite3.connect('drupal_pdfs.db')
     cursor = conn.cursor()
@@ -152,6 +149,7 @@ def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict
     language_set = violation_dict.get("metadata").get("language", None)
     page_count = violation_dict.get("doc_data").get("pages", 0)
     file_hash = violation_dict.get("file_hash", "")
+    has_form = violation_dict.get("has_form", False)
 
 
     # check if pdf report exsits by file has
@@ -169,8 +167,9 @@ def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict
             title_set,
             language_set,
             page_count,
-            pdf_hash
-        ) VALUES (?,?,?,?,?,?,?,?,?)
+            pdf_hash,
+            has_form
+        ) VALUES (?,?,?,?,?,?,?,?,?,?)
         """, (
             violations,
             failed_checks,
@@ -180,9 +179,10 @@ def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict
             title_set,
             language_set,
             page_count,
-            file_hash
+            file_hash,
+            has_form
         ))
-
+        conn.commit()
     else:
         print("PDF report already exists in the database.")
 
@@ -191,7 +191,6 @@ def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict
     exists = cursor.execute("SELECT * FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ? AND file_hash = ?",
                    (pdf_uri, parent_uri, file_hash)).fetchone()
 
-    print(exists)
 
     if exists:
         print("PDF file already exists in the database.")
@@ -215,7 +214,7 @@ def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict
 
         # Commit the changes and close the connection
         conn.commit()
-        conn.close()
+    conn.close()
 
 
 
@@ -273,7 +272,6 @@ def add_pdf_report_failure(pdf_uri, parent_uri, site_id, error_message):
         cursor = conn.cursor()
 
         # get pdf_id from pdf table with pdf_uri and parent_uri
-        print("AADDDINNGG ERRRORRRR")
         print(pdf_uri, parent_uri, site_id, error_message)
 
         pdf_id = cursor.execute("SELECT * FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ?", (pdf_uri, parent_uri)).fetchone()
@@ -290,3 +288,13 @@ def add_pdf_report_failure(pdf_uri, parent_uri, site_id, error_message):
             conn.commit()
             conn.close()
             print("No PDF in system add raw failure")
+
+
+def truncate_reports_table():
+    conn = sqlite3.connect('drupal_pdfs.db')
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM pdf_report")
+    cursor.execute("DELETE FROM failure")
+    conn.commit()
+    conn.close()
+

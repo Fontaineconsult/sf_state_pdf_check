@@ -156,6 +156,7 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
                 item_list[10] = "Yes" if item_list[10] == 1 else "No"
                 item_list[12] = "Yes" if item_list[12] == 1 else "No"
                 item_list[13] = "Yes" if item_list[13] == 1 else "No"
+                item_list[15] = "Yes" if item_list[15] == 1 else "No"
                 item_list.append(round(int(item[8]) / int(item[14])) if item[8] != 0 else 0)
                 item_list[0] = f'=HYPERLINK("{item[0]}", "{item[0]}")'
                 item_list[1] = f'=HYPERLINK("{item[1]}", "{item[1]}")'

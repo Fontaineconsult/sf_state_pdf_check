@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS pdf_report (
     title_set BOOLEAN DEFAULT FALSE,
     language_set BOOLEAN DEFAULT FALSE,
     page_count INTEGER,
+    has_form BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (pdf_hash) REFERENCES drupal_pdf_files(file_hash)
 );
 """

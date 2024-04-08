@@ -62,4 +62,4 @@ def create_all_pdf_reports():
     full_pdf_scan(pdf_sites_folder)
 
 
-print(count_high_priority_pdfs())
+build_all_xcel_reports()

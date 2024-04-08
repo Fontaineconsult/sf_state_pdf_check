@@ -62,47 +62,49 @@ def loop_through_files_in_folder(folder_path):
 def scan_pdfs(directory, domain_id):
     pdf_locations = loop_through_files_in_folder(directory)
 
-    for file in pdf_locations:
+    if pdf_locations:
 
-        try:
-            file_url, loc = file.rstrip(" ").split(" ")
-            # parsed_url = urlparse(file_url)
-            # encoded_path = quote(parsed_url.path)
-            # file_url = urlunparse(parsed_url._replace(path=encoded_path))
-            report_exsits = check_if_pdf_report_exists(file_url, loc)
-            print("report exists", report_exsits)
-        except ValueError as e:
-            add_pdf_report_failure("file_url", "loc", domain_id, "Couldn't unpack file url and location")
-            continue
+        for file in pdf_locations:
 
-        if not report_exsits:
-            if box_share_pattern_match(file_url):
-                print("Downloading File From Box")
-                box_download = download_from_box(file_url, loc, domain_id)
+            try:
+                file_url, loc = file.rstrip(" ").split(" ")
+                # parsed_url = urlparse(file_url)
+                # encoded_path = quote(parsed_url.path)
+                # file_url = urlunparse(parsed_url._replace(path=encoded_path))
+                report_exsits = check_if_pdf_report_exists(file_url, loc)
+                print("report exists", report_exsits)
+            except ValueError as e:
+                add_pdf_report_failure("file_url", "loc", domain_id, "Couldn't unpack file url and location")
+                continue
 
-                if not box_download[0]:
-                    print("Box Download failed", file_url)
-                    add_pdf_report_failure(file_url, loc, domain_id, box_download[1])
-            else:
-                pdf_download = download_pdf_into_memory(file_url,loc, domain_id)
-                if pdf_download:
+            if not report_exsits:
+                if box_share_pattern_match(file_url):
+                    print("Downloading File From Box")
+                    box_download = download_from_box(file_url, loc, domain_id)
 
-                    with open(temp_pdf_path, "wb") as f:
-                        f.write(pdf_download)
+                    if not box_download[0]:
+                        print("Box Download failed", file_url)
+                        add_pdf_report_failure(file_url, loc, domain_id, box_download[1])
                 else:
-                    continue
+                    pdf_download = download_pdf_into_memory(file_url,loc, domain_id)
+                    if pdf_download:
 
-            report = create_verapdf_report(file_url)
+                        with open(temp_pdf_path, "wb") as f:
+                            f.write(pdf_download)
+                    else:
+                        continue
 
-            if report["report"]["status"] == "Succeeded":
+                report = create_verapdf_report(file_url)
 
-                add_pdf_file_to_database(file_url, loc, domain_id, report["report"]["report"])
+                if report["report"]["status"] == "Succeeded":
+                    print("Add report to DB")
+                    add_pdf_file_to_database(file_url, loc, domain_id, report["report"]["report"])
+                else:
+                    add_pdf_report_failure(file_url, loc, domain_id, report["report"]["report"])
+
             else:
-                add_pdf_report_failure(file_url, loc, domain_id, report["report"]["report"])
-
-        else:
-            print("Report already exists", file_url)
-            continue
+                print("Report already exists", file_url)
+                continue
 def full_pdf_scan(site_folders):
 
     # get all folders in the site_folders directory

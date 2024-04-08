@@ -401,6 +401,24 @@ def get_doc_data(document):
     return doc_data
 
 
+def check_for_forms(document):
+
+
+    for page in document.pages:
+
+        # Attempt to access annotations for the current page
+        if '/Annots' in page:
+            annots = page['/Annots']
+
+            for annot in annots:
+                # Check if the annotation has the /FT key, indicating it's a form field
+                if '/FT' in annot:
+                    return True  # A form field was found
+
+    # If we reach this point, no form fields were found
+    return False
+
+
 def check_bookmarks(document):
     if check_if_tagged(document):
         outlines = document.Root.get("/Outlines")
@@ -427,7 +445,6 @@ def pdf_check(location):
     try:
         Pikepdf = Pdf.open(location, allow_overwriting_input=True)
         tagged = check_if_tagged(Pikepdf)
-
         # get file hash
         with open(location, 'rb') as afile:
             buf = afile.read()
@@ -444,6 +461,7 @@ def pdf_check(location):
         obj = {
 
             "tagged": bool(tagged),
+            "has_form": check_for_forms(Pikepdf),
             # "alt_tag_count": alt_tag_count,
             "pdf_text_type": pdf_text_type,
             "metadata": check_metadata(Pikepdf),
@@ -464,10 +482,6 @@ def pdf_check(location):
     except PdfError as e:
         print("PDF WRITE ERROR", e)
         return None
-
-
-
-
 
 
 

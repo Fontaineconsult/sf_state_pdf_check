@@ -13,7 +13,8 @@ SELECT
     pdf_report.pdf_text_type,
     pdf_report.title_set,
     pdf_report.language_set,
-    pdf_report.page_count
+    pdf_report.page_count,
+    pdf_report.has_form
 FROM
     drupal_pdf_files
         JOIN
