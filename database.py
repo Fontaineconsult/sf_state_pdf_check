@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS drupal_site (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     domain_name TEXT NOT NULL,
     page_title TEXT,
-    security_group_name TEXT
+    security_group_name TEXT,
+    box_folder TEXT
 
 );
 """

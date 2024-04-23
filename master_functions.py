@@ -25,7 +25,6 @@ def build_all_xcel_reports():
 
 
 
-
 def count_reportable_pdfs():
     total_pdfs = 0
     all_sites = get_all_sites()
@@ -37,12 +36,12 @@ def count_reportable_pdfs():
 
         for item in site_data:
             item_list = list(item)
-            print(item_list[1])
             if not check_for_node(item_list[1]):
                 total_pdfs += 1
 
     return total_pdfs
 
+print(count_reportable_pdfs())
 
 def count_high_priority_pdfs():
     is_high_priority_count = 0
@@ -57,6 +56,7 @@ def count_high_priority_pdfs():
             if not is_high_priority(item):
                 is_high_priority_count += 1
     return is_high_priority_count
+
 
 def create_all_pdf_reports():
     full_pdf_scan(pdf_sites_folder)

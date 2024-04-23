@@ -14,7 +14,8 @@ SELECT
     pdf_report.title_set,
     pdf_report.language_set,
     pdf_report.page_count,
-    site_assignment.user_id
+    site_assignment.user_id,
+    site_user.employee_id
 FROM
     drupal_pdf_files
         JOIN
@@ -23,7 +24,9 @@ FROM
     pdf_report ON drupal_pdf_files.file_hash = pdf_report.pdf_hash
         JOIN
     site_assignment on drupal_site.id = site_assignment.site_id
+        JOIN
+    site_user on site_assignment.user_id = site_user.employee_id
 
 
-WHERE
-    site_assignment.user_id = '912793588';
+WHERE parent_uri NOT LIKE '%/node/%' AND parent_uri NOT LIKE '%/index.php/%' AND
+      site_assignment.user_id = '{employee_id}'

@@ -298,3 +298,30 @@ def truncate_reports_table():
     conn.commit()
     conn.close()
 
+
+
+
+
+def import_box_folders():
+
+
+    conn = sqlite3.connect("drupal_pdfs.db")
+    cursor = conn.cursor()
+
+    sql = '''
+    UPDATE drupal_site
+    SET box_folder = ?
+    WHERE domain_name = ?;
+    '''
+
+    with open(r"box_folders.csv", "r", encoding='utf-8') as f:
+        csvreader = csv.reader(f)
+        next(csvreader, None)
+
+        for item in csvreader:
+            cursor.execute(sql, (item[1], item[0]))
+
+    conn.commit()
+    conn.close()
+
+import_box_folders()

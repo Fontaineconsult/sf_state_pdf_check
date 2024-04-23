@@ -7,6 +7,7 @@ SELECT
     drupal_site.domain_name,
     drupal_site.page_title,
     drupal_site.security_group_name,
+    drupal_site.box_folder,
     site_assignment.id AS assignment_id
 FROM
     site_user

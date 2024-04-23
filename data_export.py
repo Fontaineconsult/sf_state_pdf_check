@@ -3,7 +3,7 @@ from collections import namedtuple
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.worksheet.table import Table, TableStyleInfo
-
+import csv
 from data_import import get_site_id_from_domain_name
 from filters import check_for_node, is_high_priority
 
@@ -147,19 +147,26 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
 
         # Write the data rows to worksheet
         for item in data:
+
             item_list = list(item)
             high_priority = is_high_priority(item)
-
+            print(item_list)
             if not check_for_node(item_list[1]):  # removes node urls
-                # Similar modifications as in your code...
-                item_list[9] = "Yes" if item_list[9] == 1 else "No"
-                item_list[10] = "Yes" if item_list[10] == 1 else "No"
-                item_list[12] = "Yes" if item_list[12] == 1 else "No"
-                item_list[13] = "Yes" if item_list[13] == 1 else "No"
-                item_list[15] = "Yes" if item_list[15] == 1 else "No"
-                item_list.append(round(int(item[8]) / int(item[14])) if item[8] != 0 else 0)
                 item_list[0] = f'=HYPERLINK("{item[0]}", "{item[0]}")'
                 item_list[1] = f'=HYPERLINK("{item[1]}", "{item[1]}")'
+                item_list[3] = item[3][0:6]
+                # Similar modifications as in your code...
+                #item 6 = violations
+                #item 7 = failed checks
+                item_list[8] = "Yes" if item_list[8] == 1 else "No" #tagged
+                #item 9 = pdf text type
+                item_list[10] = "Yes" if item_list[10] == 1 else "No" # title set
+                item_list[11] = "Yes" if item_list[11] == 1 else "No" # language set
+                #item 12 = page_count
+                # item_list[12] = "Yes" if item_list[12] == 1 else "No"
+                item_list[13] = "Yes" if item_list[13] == 1 else "No"
+                item_list.append(round(int(item[7]) / int(item[12])) if item[7] != 0 and item[12] !=0 else 0)
+
 
                 # Append the modified list of values to the worksheet
                 worksheet.append(item_list)
@@ -240,4 +247,5 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
     # Save the Excel file
     wb.save(file_name)
     print(f"Data written to {file_name} with a table format.")
+
 
