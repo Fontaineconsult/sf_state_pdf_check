@@ -6,7 +6,7 @@ from openpyxl.worksheet.table import Table, TableStyleInfo
 import csv
 from data_import import get_site_id_from_domain_name
 from filters import check_for_node, is_high_priority
-
+from openpyxl.worksheet.datavalidation import DataValidation
 
 def get_all_sites():
 
@@ -134,9 +134,12 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
             return
 
         # Assuming all namedtuples have the same fields, get column names from the first item
-        columns = list(data[0]._fields)
-        columns.append("Errors/Page")
 
+        columns = list(data[0]._fields)
+        print(columns)
+        columns.remove('box_folder')
+        columns.append("Errors/Page")
+        columns.append("Low Priority")
         # Write the column headers to worksheet
         worksheet.append(columns)
 
@@ -145,12 +148,17 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
                                end_color='FF9999',
                                fill_type='solid')
 
+
+        # Data validation for Low Priority column
+        dv = DataValidation(type="list", formula1='"Yes,No"', allow_blank=False)
+        worksheet.add_data_validation(dv)
+
         # Write the data rows to worksheet
         for item in data:
 
             item_list = list(item)
             high_priority = is_high_priority(item)
-            print(item_list)
+
             if not check_for_node(item_list[1]):  # removes node urls
                 item_list[0] = f'=HYPERLINK("{item[0]}", "{item[0]}")'
                 item_list[1] = f'=HYPERLINK("{item[1]}", "{item[1]}")'
@@ -165,11 +173,16 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
                 #item 12 = page_count
                 # item_list[12] = "Yes" if item_list[12] == 1 else "No"
                 item_list[13] = "Yes" if item_list[13] == 1 else "No"
+                del item_list[14] # remove box.com link
                 item_list.append(round(int(item[7]) / int(item[12])) if item[7] != 0 and item[12] !=0 else 0)
-
+                item_list.append("No")
 
                 # Append the modified list of values to the worksheet
                 worksheet.append(item_list)
+                dv.add(worksheet[f"{chr(65+len(columns)-1)}{worksheet._current_row}"])
+
+
+
 
                 # If high_priority is True, apply red_fill to the entire row
                 if high_priority:

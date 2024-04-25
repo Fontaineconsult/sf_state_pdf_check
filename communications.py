@@ -33,13 +33,15 @@ def generate_pdf_count_by_employee(employee_id):
 
 
             results = [Row(*row) for row in results]
+
             user_table[domain] = {"priority": 0, "total": 0, "box_folder": ""}
             for item in results:
                 user_table[domain]["total"] += 1
                 user_table[domain]["box_folder"] = item.box_folder
                 if is_high_priority(item):
                     user_table[domain]["priority"] += 1
-
+            if user_table[domain]["priority"] == 0:
+                user_table.pop(domain)
     return user_table
 
 
