@@ -41,8 +41,6 @@ def count_reportable_pdfs():
 
     return total_pdfs
 
-print(count_reportable_pdfs())
-
 def count_high_priority_pdfs():
     is_high_priority_count = 0
 
@@ -62,4 +60,3 @@ def create_all_pdf_reports():
     full_pdf_scan(pdf_sites_folder)
 
 
-build_all_xcel_reports()

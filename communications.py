@@ -111,7 +111,7 @@ def template_email(data_dict):
 
 def build_emails():
 
-
+    emails = []
     with open('sql/get_all_users_with_pdf_files.sql') as pdf_reports_sql:
         sql_query = pdf_reports_sql.read()
         conn = sqlite3.connect("drupal_pdfs.db")
@@ -119,7 +119,7 @@ def build_emails():
         cursor.execute(sql_query)
         results = cursor.fetchall()
         for employee in results:
-            print(employee)
+
 
             html_table = create_html_email_grid(generate_pdf_count_by_employee(employee[3]))
 
@@ -129,11 +129,7 @@ def build_emails():
                 "pdf_data_table": html_table
             }
             email_text = template_email(template_values)
-            print(email_text)
+            emails.append( (email_text, employee[2]) )
+    return emails
 
-build_emails()
 
-
-# template_email("ds")
-
-# print(create_html_email_grid(generate_pdf_count_by_employee("912793588")))
