@@ -9,45 +9,45 @@ emails = build_emails()
 
 def generate_email(html_content, reciever):
     print("html_content", html_content)
-    try:
-        # Ensure Outlook is correctly registered and accessible via COM
-        pythoncom.CoInitialize()
 
-        print("1. Attempting to create Outlook application instance...")
-        outlook = win32.Dispatch('Outlook.Application')
-        print("Outlook application instance created.")
+    # Ensure Outlook is correctly registered and accessible via COM
+    pythoncom.CoInitialize()
 
-        # Get the MAPI namespace
-        print("2. Getting MAPI namespace...")
-        namespace = outlook.GetNamespace("MAPI")
-        print("MAPI namespace obtained.")
+    print("1. Attempting to create Outlook application instance...")
+    outlook = win32.Dispatch('Outlook.Application')
+    print("Outlook application instance created.")
 
-        # Wait for a short period to ensure everything is initialized
-        time.sleep(2)
+    # Get the MAPI namespace
+    print("2. Getting MAPI namespace...")
+    namespace = outlook.GetNamespace("MAPI")
+    print("MAPI namespace obtained.")
 
-        # Create a new mail item
-        print("3. Creating new mail item...")
-        mail = outlook.CreateItem(0)  # 0: olMailItem
-        print("Mail item created.")
+    # Wait for a short period to ensure everything is initialized
+    time.sleep(2)
 
-        # Set the email properties
-        mail.Subject = "Drupal PDF Accessibility Conformance Project"
-        mail.BodyFormat = 2  # 2: olFormatHTML
-        mail.HTMLBody = f"{html_content}"
-        mail.To = "fontaine@sfsu.edu"
-        print("Email properties set.")
+    # Create a new mail item
+    print("3. Creating new mail item...")
+    mail_item  = outlook.CreateItem(0)  # 0: olMailItem
+    print("Mail item created.")
 
-        # Save the email as an MSG file
-        save_path = r"C:\Users\913678186\IdeaProjects\sf_state_pdf_website_scan\emails\email.msg"  # Ensure the path includes the filename and extension
-        mail.SaveAs(save_path, 3)  # 3: olMSG
-        mail.send()
-        print(f"Email saved as: {save_path}")
+    # Set the email properties
+    mail_item.Subject = "Drupal PDF Accessibility Conformance Project"
+    mail_item.BodyFormat = 2  # 2: olFormatHTML
+    mail_item.HTMLBody = html_content
+    mail_item.To = "fontaine@sfsu.edu"
+    print("Email properties set.")
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    # Save the email as an MSG file
+    save_path = r"C:\Users\913678186\IdeaProjects\sf_state_pdf_website_scan\emails\email.msg"  # Ensure the path includes the filename and extension
+    # mail.SaveAs(save_path, 3)  # 3: olMSG
+    print("Sending")
+    mail_item.Send()
+    # print(f"Email saved as: {save_path}")
+    print("Complete")
 
-    finally:
-        pythoncom.CoUninitialize()
+
+
+    pythoncom.CoUninitialize()
 
 
 for email in emails:
