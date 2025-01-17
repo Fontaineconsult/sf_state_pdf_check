@@ -1,7 +1,8 @@
 import sqlite3
 from collections import namedtuple
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import range_boundaries
 from openpyxl.worksheet.table import Table, TableStyleInfo
 import csv
 from data_import import get_site_id_from_domain_name
@@ -109,14 +110,6 @@ def get_site_failures(site_name):
 
 
 
-
-from openpyxl import Workbook
-from openpyxl.worksheet.table import Table, TableStyleInfo
-from openpyxl.styles import Font
-
-
-
-
 def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
     # Create a workbook
     wb = Workbook()
@@ -133,132 +126,193 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
             print("No data to write to Excel.")
             return
 
-        # Assuming all namedtuples have the same fields, get column names from the first item
-
+        # 1) Build the columns list from the namedtuple fields
         columns = list(data[0]._fields)
-        print(columns)
+        # Rename 'file_hash' to 'fingerprint'
+        columns = ["fingerprint" if col == "file_hash" else col for col in columns]
+        # Remove the 'box_folder' column
         columns.remove('box_folder')
+
+        # Add custom columns to the end
         columns.append("Errors/Page")
         columns.append("Low Priority")
-        # Write the column headers to worksheet
+        columns.append("DPRC Will Remediate")
+
+        # 2) Write the column headers to the worksheet
         worksheet.append(columns)
 
-        # Define the fill color for high priority rows
-        red_fill = PatternFill(start_color='FF9999',  # This color code approximates "Red, Accent 2, Lighter 60%"
-                               end_color='FF9999',
-                               fill_type='solid')
+        # 3) Define the fill color for high priority rows
+        red_fill = PatternFill(start_color='FF9999', end_color='FF9999', fill_type='solid')
 
+        # 4) Create data validations for "Low Priority" and "DPRC Will Remediate" columns
+        dv_low_priority = DataValidation(type="list", formula1='"Yes,No"', allow_blank=False)
+        dv_dprc_remediate = DataValidation(type="list", formula1='"Yes,No"', allow_blank=False)
 
-        # Data validation for Low Priority column
-        dv = DataValidation(type="list", formula1='"Yes,No"', allow_blank=False)
-        worksheet.add_data_validation(dv)
+        # Add both data validations to the worksheet
+        worksheet.add_data_validation(dv_low_priority)
+        worksheet.add_data_validation(dv_dprc_remediate)
 
-        # Write the data rows to worksheet
+        # Loop through data rows and populate cells
         for item in data:
-
             item_list = list(item)
-            high_priority = is_high_priority(item)
 
-            if not check_for_node(item_list[1]):  # removes node urls
+            high_priority = is_high_priority(item)  # (Your function to check if row is high priority)
+
+            # Skip if the second item is a node link
+            if not check_for_node(item_list[1]):    # (Your function to check if node link)
+                # Convert first two columns to hyperlinks
                 item_list[0] = f'=HYPERLINK("{item[0]}", "{item[0]}")'
                 item_list[1] = f'=HYPERLINK("{item[1]}", "{item[1]}")'
+
+                # Truncate the 4th item (index 3) to 6 characters
                 item_list[3] = item[3][0:6]
-                # Similar modifications as in your code...
-                #item 6 = violations
-                #item 7 = failed checks
-                item_list[8] = "Yes" if item_list[8] == 1 else "No" #tagged
-                #item 9 = pdf text type
-                item_list[10] = "Yes" if item_list[10] == 1 else "No" # title set
-                item_list[11] = "Yes" if item_list[11] == 1 else "No" # language set
-                #item 12 = page_count
-                # item_list[12] = "Yes" if item_list[12] == 1 else "No"
+
+                # Convert these columns to "Yes"/"No"
+                item_list[8] = "Yes" if item_list[8] == 1 else "No"
+                item_list[10] = "Yes" if item_list[10] == 1 else "No"
+                item_list[11] = "Yes" if item_list[11] == 1 else "No"
                 item_list[13] = "Yes" if item_list[13] == 1 else "No"
-                del item_list[14] # remove box.com link
-                item_list.append(round(int(item[7]) / int(item[12])) if item[7] != 0 and item[12] !=0 else 0)
-                item_list.append("No")
 
-                # Append the modified list of values to the worksheet
+                # Remove the box.com link at index 14
+                del item_list[14]
+
+                # Calculate Errors/Page
+                errors_per_page = 0
+                if item[7] != 0 and item[12] != 0:
+                    errors_per_page = round(int(item[7]) / int(item[12]))
+                item_list.append(errors_per_page)
+
+                # Append placeholders for Low Priority & DPRC columns
+                item_list.append("")
+                item_list.append("")
+
+                # Append the row to the worksheet
                 worksheet.append(item_list)
-                dv.add(worksheet[f"{chr(65+len(columns)-1)}{worksheet._current_row}"])
+                current_row = worksheet._current_row
 
+                # Identify columns for data validation
+                low_priority_col_idx = len(columns) - 1
+                dprc_remediate_col_idx = len(columns)
 
+                # Set defaults to "No"
+                low_priority_cell = worksheet.cell(row=current_row, column=low_priority_col_idx)
+                dprc_remediate_cell = worksheet.cell(row=current_row, column=dprc_remediate_col_idx)
+                low_priority_cell.value = "No"
+                dprc_remediate_cell.value = "No"
 
+                dv_low_priority.add(low_priority_cell)
+                dv_dprc_remediate.add(dprc_remediate_cell)
 
                 # If high_priority is True, apply red_fill to the entire row
                 if high_priority:
-                    for cell in worksheet[worksheet._current_row]:
+                    for cell in worksheet[current_row]:
                         cell.fill = red_fill
 
-        # Apply font styles for hyperlink columns in worksheet
-        for row in worksheet.iter_rows(min_row=2, min_col=1, max_col=2, max_row=len(data) + 1):
+        # Make columns A and B appear as hyperlinks (blue + underline)
+        max_row = worksheet.max_row
+        for row in worksheet.iter_rows(min_row=2, min_col=1, max_col=2, max_row=max_row):
             for cell in row:
                 cell.font = Font(color='0563C1', underline='single')
 
-        # Determine the Excel table range for worksheet
-        table_range = f"A1:{chr(64 + len(columns))}{len(data) + 1}"
-
-        # Create a table in worksheet
-        table = Table(displayName="DataTable", ref=table_range)
-
-        # Add a default style with striped rows and banded columns
-        style = TableStyleInfo(name="TableStyleMedium9",
-                               showFirstColumn=False,
-                               showLastColumn=False,
-                               showRowStripes=True,
-                               showColumnStripes=True)
-
-        table.tableStyleInfo = style
-
-        # Add the table to the worksheet
-        worksheet.add_table(table)
+        # Convert the data into a formatted Table
+        table_range = f"A1:{chr(64 + len(columns))}{max_row}"
+        data_table = Table(displayName="DataTable", ref=table_range)
+        style = TableStyleInfo(
+            name="TableStyleMedium9",
+            showFirstColumn=False,
+            showLastColumn=False,
+            showRowStripes=True,
+            showColumnStripes=True
+        )
+        data_table.tableStyleInfo = style
+        worksheet.add_table(data_table)
 
     def add_data_to_failure(failure_data, worksheet):
         if not failure_data:
             print("No failure data to write to Excel.")
             return
 
-        # Assuming all namedtuples have the same fields, get column names from the first item
+        # Collect columns from the first item
         columns = list(failure_data[0]._fields)
-
-        # Write the column headers to the worksheet
         worksheet.append(columns)
 
-        # Write the data rows to the worksheet
         for item in failure_data:
-            # Convert named tuple to a list
-            item_list = list(item)
+            worksheet.append(list(item))
 
-            # Append the list of values to the worksheet
-            worksheet.append(item_list)
-
-        # Determine the Excel table range for the worksheet
+        # Create a table in the Failure sheet
         table_range = f"A1:{chr(64 + len(columns))}{len(failure_data) + 1}"
+        failure_table = Table(displayName="FailureDataTable", ref=table_range)
+        style = TableStyleInfo(
+            name="TableStyleMedium9",
+            showFirstColumn=False,
+            showLastColumn=False,
+            showRowStripes=True,
+            showColumnStripes=True
+        )
+        failure_table.tableStyleInfo = style
+        worksheet.add_table(failure_table)
 
-        # Create a table in the worksheet
-        table = Table(displayName="FailureDataTable", ref=table_range)
+    # ---------------- MAIN LOGIC ----------------
 
-        # Add a default style with striped rows and banded columns
-        style = TableStyleInfo(name="TableStyleMedium9",
-                               showFirstColumn=False,
-                               showLastColumn=False,
-                               showRowStripes=True,
-                               showColumnStripes=True)
-
-        table.tableStyleInfo = style
-
-        # Add the table to the worksheet
-        worksheet.add_table(table)
-
-    # Call the sub-function to add data to the "Scanned PDFs" worksheet
+    # 1) Populate the "Scanned PDFs" sheet
     add_data_to_scanned_pdfs(data, scanned_pdfs_ws)
+
+    # 2) Create the "Failure" sheet
     add_data_to_failure(failure_data, failure_ws)
 
-    # Placeholder call for adding data to the "Failure" worksheet
-    # Uncomment and use when implementation is added
-    # add_data_to_failure(failure, failure_ws)
+    # 3) Merging a block for instructional text in "Scanned PDFs"
+    #    after we've created/filled "DataTable" in that sheet
 
-    # Save the Excel file
+    #   A) Locate the table named "DataTable"
+    if "DataTable" in scanned_pdfs_ws.tables:
+        table_obj = scanned_pdfs_ws.tables["DataTable"]
+        table_range = table_obj.ref  # e.g. "A1:F20"
+
+        #   B) Determine last data row from table ref
+        min_col, min_row, max_col, max_row = range_boundaries(table_range)
+        last_data_row = max_row
+
+        #   C) Start 2 rows below the table
+        start_merge_row = last_data_row + 2
+
+        #   D) We want to merge 10 columns wide & 10 rows tall, for example
+        rows_merged = 10
+        cols_merged = 10
+
+        #   E) Let's assume we want to start merging at column 1 (A),
+        #      or you can shift columns if needed
+        start_col = 1
+
+        end_merge_row = start_merge_row + rows_merged - 1
+        end_merge_col = start_col + cols_merged - 1
+
+        #   F) Merge the cells
+        scanned_pdfs_ws.merge_cells(
+            start_row=start_merge_row,
+            start_column=start_col,
+            end_row=end_merge_row,
+            end_column=end_merge_col
+        )
+
+        #   G) Put some instructional text in the top-left of the merged area
+        cell = scanned_pdfs_ws.cell(row=start_merge_row, column=start_col)
+        cell.value = (
+            "Important Instructions:\n\n"
+            "1) Please see: https://access.sfsu.edu/drupal-pdf-accessibility-review\n"
+            "2) Please update the Priority column if a PDF meets the requirements for low priority.\n"
+            "3) If you would like the DPRC to outsource remediation, please select 'Yes' in the 'DPRC Will Remediate' column. This will incur a chargeback\n"
+            "3) Please contact access@sfsu.edu for questions or to provide feedback.\n"
+        )
+        #   H) Optional styling: wrap, center, bold, color, etc.
+        cell.alignment = Alignment(wrap_text=True, horizontal='center', vertical='center')
+        cell.font = Font(bold=True, color="FF0000")
+
+    else:
+        print("DataTable not found in Scanned PDFs sheet. Skipping merged instructions block.")
+
+    # 4) Save the workbook
     wb.save(file_name)
-    print(f"Data written to {file_name} with a table format.")
+    print(f"Data written to {file_name} with a table format and merged instructions.")
+
 
 

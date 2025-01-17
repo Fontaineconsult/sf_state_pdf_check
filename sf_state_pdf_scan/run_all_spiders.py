@@ -14,8 +14,10 @@ if __name__ == '__main__':
 
     # Schedule a crawl for each spider
     for spider_name in spider_loader.list():
-        print("STARTING", spider_name)
-        process.crawl(spider_name)
+
+        if spider_name == 'j_paul_leonard_library_spider':
+            print("STARTING", spider_name)
+            process.crawl(spider_name)
 
     # Start the crawl process
     process.start()

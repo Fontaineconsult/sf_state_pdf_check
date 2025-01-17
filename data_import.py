@@ -324,4 +324,3 @@ def import_box_folders():
     conn.commit()
     conn.close()
 
-import_box_folders()

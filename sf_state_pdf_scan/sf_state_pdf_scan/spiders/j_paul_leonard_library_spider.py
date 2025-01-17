@@ -12,7 +12,7 @@ from ..box_handler import get_box_contents
 
 class JPaulLeonardLibrarySpider(scrapy.Spider):
     name = 'j_paul_leonard_library_spider'
-    start_urls = ['https://m.library.sfsu.edu']
+    start_urls = ['https://library.sfsu.edu']
     output_folder = r'C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\m-library-sfsu-edu'
 
 
@@ -31,7 +31,7 @@ class JPaulLeonardLibrarySpider(scrapy.Spider):
     def parse(self, response):
 
         # Regular expression pattern for URLs within access.sfsu.edu domain
-        access_url_pattern = re.compile(r'https://m.library.sfsu.edu/.*')
+        access_url_pattern = re.compile(r'https://library.sfsu.edu/.*')
         # Pattern specifically for box.com links
         box_url_pattern = re.compile(r'https?://sfsu.box.com/s/.*')
 
