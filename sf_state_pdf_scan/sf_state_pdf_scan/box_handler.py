@@ -8,12 +8,12 @@ import re
 from data_import import add_pdf_report_failure
 
 
-def get_box_contents(box_url, loc, domain_id):
+def get_box_contents(box_url):
     page_request = requests.get(box_url)
-
+    print("CHECKING", box_url)
     if not page_request.ok:
-        add_pdf_report_failure(box_url, loc, domain_id, f"Couldn't download {page_request.status_code}")
-        return False, ""
+        # add_pdf_report_failure(box_url, parent_uri, domain_id, f"Couldn't download {page_request.status_code}")
+        return False, "Can't Access PDF"
 
     page_request = requests.get(box_url)
 

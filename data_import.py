@@ -98,8 +98,6 @@ def add_employee_and_site_assignments_from_csv_file(file_path):
             # get site record by security group name
             site = cursor.execute("SELECT * FROM drupal_site WHERE security_group_name = ?", (sec_group,)).fetchone()
 
-
-
             if site is None or employee is None:
                 print("Site or employee not found in the database.")
                 continue
@@ -112,6 +110,70 @@ def add_employee_and_site_assignments_from_csv_file(file_path):
         conn.close()
 
 
+def add_admin_contacts(file_path):
+    conn = sqlite3.connect('drupal_pdfs.db')
+    cursor = conn.cursor()
+
+    with open(file_path, 'r') as file:
+        csv_reader = csv.reader(file)
+
+        for row in csv_reader:
+
+
+            site = row[0]
+            employee_name = row[2]
+            employee_email = row[3]
+            if site is None or employee_name is None:
+                conn
+            generated_id = f"{hash(employee_email) % 1000000000}"
+
+            # print(site,employee_name,employee_email, generated_id)
+
+            full_name = employee_name.split(" ")
+            first_name = full_name[0]
+            last_name = " ".join(full_name[1:]) if len(full_name) > 1 else ""
+
+            print(full_name, first_name,last_name, generated_id, employee_email)
+
+            # Check if email already exists in the site_user table
+            email_exists = cursor.execute("SELECT * FROM site_user WHERE email = ?", (employee_email,)).fetchone()
+            if email_exists:
+                # cursor.execute("UPDATE site_user SET is_manager = 1 WHERE email = ?", (employee_email,))
+                print("email_exists", email_exists)
+
+                assignment_exists = cursor.execute("SELECT * FROM site_assignment WHERE domain_name = ? AND user_id = ?", (site, email_exists[0]))
+                if not assignment_exists:
+                    cursor.execute("INSERT INTO site_assignment (domain_name, user_id) VALUES (?, ?)", (site, email_exists[0]))
+
+            if not email_exists:
+                cursor.execute("INSERT INTO site_user (employee_id, first_name, last_name, email) VALUES (?, ?, ?, ?)", (generated_id, first_name, last_name, employee_email))
+                employee = cursor.execute("SELECT * FROM site_user WHERE email = ?", (employee_email,)).fetchone()
+                cursor.execute("INSERT INTO site_assignment (domain_name, user_id) VALUES (?, ?)", (site, employee[0]))
+
+        #     #check and insert employee into site_user table if they don't exist, if they do exist return the record
+        #     cursor.execute("INSERT OR IGNORE INTO site_user (employee_id, first_name, last_name, email) VALUES (?, ?, ?, ?)", (generated_id, first_name, last_name, employee_email))
+        #
+        #     # get employee record by employee id
+        #     employee = cursor.execute("SELECT * FROM site_user WHERE employee_id = ?", (employee_id,)).fetchone()
+        #
+        #     # get site record by security group name
+        #     site = cursor.execute("SELECT * FROM drupal_site WHERE security_group_name = ?", (sec_group,)).fetchone()
+        #
+        #
+        #
+            if site is None or employee is None:
+                print("Site or employee not found in the database.")
+                continue
+        #
+        #
+        #     # insert employee and site assignment into site_assignment table
+        #     cursor.execute("INSERT INTO site_assignment (site_id, user_id) VALUES (?, ?)", (site[0], employee[0]))
+        #
+        #     conn.commit()
+        # conn.close()
+
+
+add_admin_contacts(r"C:\Users\913678186\IdeaProjects\sf_state_pdf_website_scan\admin_contacts.csv")
 
 def check_if_pdf_file_exists(pdf_uri, parent_uri, drupal_site_id, pdf_hash):
 
@@ -215,12 +277,6 @@ def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict
         # Commit the changes and close the connection
         conn.commit()
     conn.close()
-
-
-
-#
-# add_sites_from_site_csv_file("sites.csv")
-# add_employee_and_site_assignments_from_csv_file("site_assignments.csv")
 
 
 

@@ -31,13 +31,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\root\application\migrations\data_import\raw_data\file.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\site_assignments.csv">
           <value>
             <Attribute>

@@ -37,7 +37,7 @@ def build_single_xcel_report(site_name):
 
         write_data_to_excel(site_data, fail_data, scans_output.format(site_folder_name + "\\" + f"{site_folder_name.split('-')[0]}-pdf-scans.xlsx"))
 
-build_single_xcel_report("library.sfsu.edu")
+
 
 
 def count_reportable_pdfs():

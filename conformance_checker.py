@@ -157,10 +157,9 @@ def single_site_pdf_scan(site_folder):
 
 
     domain_id = get_site_id_by_domain_name(os.path.basename(site_folder))
-    print(domain_id)
+
     if domain_id is not None:
         scan_pdfs(site_folder, domain_id)
 
 
 
-# single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\library-sfsu-edu")
