@@ -2,6 +2,7 @@ import os
 
 from conformance_checker import full_pdf_scan
 from data_export import get_pdfs_by_site_name, get_all_sites, write_data_to_excel, get_site_failures
+from database import create_pdf_report
 from filters import check_for_node, is_high_priority
 
 pdf_sites_folder = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans"
@@ -96,4 +97,5 @@ def create_all_pdf_reports():
 
     full_pdf_scan(pdf_sites_folder)
 
-
+# create_all_pdf_reports()
+# build_all_xcel_reports()

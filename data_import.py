@@ -116,18 +116,17 @@ def add_admin_contacts(file_path):
 
     with open(file_path, 'r') as file:
         csv_reader = csv.reader(file)
-
+        header = next(csv_reader)
         for row in csv_reader:
 
 
             site = row[0]
             employee_name = row[2]
             employee_email = row[3]
-            if site is None or employee_name is None:
-                conn
+            if site is None or employee_name is None or employee_email is None:
+                continue
             generated_id = f"{hash(employee_email) % 1000000000}"
 
-            # print(site,employee_name,employee_email, generated_id)
 
             full_name = employee_name.split(" ")
             first_name = full_name[0]
@@ -137,43 +136,28 @@ def add_admin_contacts(file_path):
 
             # Check if email already exists in the site_user table
             email_exists = cursor.execute("SELECT * FROM site_user WHERE email = ?", (employee_email,)).fetchone()
+            site_id = cursor.execute("SELECT id FROM drupal_site WHERE domain_name = ?", (site,)).fetchone()
+            print(site_id)
             if email_exists:
-                # cursor.execute("UPDATE site_user SET is_manager = 1 WHERE email = ?", (employee_email,))
+                cursor.execute("UPDATE site_user SET is_manager = 1 WHERE email = ?", (employee_email,))
                 print("email_exists", email_exists)
 
-                assignment_exists = cursor.execute("SELECT * FROM site_assignment WHERE domain_name = ? AND user_id = ?", (site, email_exists[0]))
+                assignment_exists = cursor.execute("SELECT * FROM site_assignment WHERE site_id = ? AND user_id = ?", (site_id[0], email_exists[0]))
                 if not assignment_exists:
-                    cursor.execute("INSERT INTO site_assignment (domain_name, user_id) VALUES (?, ?)", (site, email_exists[0]))
+                    cursor.execute("INSERT INTO site_assignment (site_id, user_id) VALUES (?, ?)", (site_id[0], email_exists[0]))
 
             if not email_exists:
                 cursor.execute("INSERT INTO site_user (employee_id, first_name, last_name, email) VALUES (?, ?, ?, ?)", (generated_id, first_name, last_name, employee_email))
                 employee = cursor.execute("SELECT * FROM site_user WHERE email = ?", (employee_email,)).fetchone()
-                cursor.execute("INSERT INTO site_assignment (domain_name, user_id) VALUES (?, ?)", (site, employee[0]))
 
-        #     #check and insert employee into site_user table if they don't exist, if they do exist return the record
-        #     cursor.execute("INSERT OR IGNORE INTO site_user (employee_id, first_name, last_name, email) VALUES (?, ?, ?, ?)", (generated_id, first_name, last_name, employee_email))
-        #
-        #     # get employee record by employee id
-        #     employee = cursor.execute("SELECT * FROM site_user WHERE employee_id = ?", (employee_id,)).fetchone()
-        #
-        #     # get site record by security group name
-        #     site = cursor.execute("SELECT * FROM drupal_site WHERE security_group_name = ?", (sec_group,)).fetchone()
-        #
-        #
-        #
-            if site is None or employee is None:
-                print("Site or employee not found in the database.")
-                continue
-        #
-        #
-        #     # insert employee and site assignment into site_assignment table
-        #     cursor.execute("INSERT INTO site_assignment (site_id, user_id) VALUES (?, ?)", (site[0], employee[0]))
-        #
-        #     conn.commit()
-        # conn.close()
+                cursor.execute("INSERT INTO site_assignment (site_id, user_id) VALUES (?, ?)", (site_id[0], employee[0]))
+
+            conn.commit()
+
+        conn.close()
 
 
-add_admin_contacts(r"C:\Users\913678186\IdeaProjects\sf_state_pdf_website_scan\admin_contacts.csv")
+
 
 def check_if_pdf_file_exists(pdf_uri, parent_uri, drupal_site_id, pdf_hash):
 

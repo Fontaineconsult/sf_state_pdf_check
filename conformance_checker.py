@@ -17,7 +17,7 @@ temp_profile_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_sc
 def download_pdf_into_memory(url, loc, domain_id):
 
     request = requests.get(url)
-
+    print("DFDSFDS", request, url)
     if request.ok:
         return request.content
     else:
@@ -52,10 +52,10 @@ def load_text_file_lines(file_path):
 
 
 def loop_through_files_in_folder(folder_path):
-    for root, dirs, files in os.walk(folder_path):
-        for file in files:
-            if file.endswith(".txt"):
-                return load_text_file_lines(os.path.join(folder_path,file))
+    file_path = os.path.join(folder_path, "scanned_pdfs.txt")
+    if os.path.exists(file_path):
+        return load_text_file_lines(file_path)
+    return None  # Return None if the file does not exist
 
 
 def scan_pdfs(directory, domain_id):
@@ -81,9 +81,15 @@ def scan_pdfs(directory, domain_id):
     if pdf_locations:
 
         for file in pdf_locations:
+            print("DFD", file)
 
             try:
-                file_url, loc = file.rstrip(" ").split(" ")
+                file_split = file.split(' ', 1)  # Splits at the last space
+                print(file_split)
+                file_url = file_split[0]
+                loc = file_split[1]
+
+
                 # parsed_url = urlparse(file_url)
                 # encoded_path = quote(parsed_url.path)
                 # file_url = urlunparse(parsed_url._replace(path=encoded_path))
@@ -136,7 +142,9 @@ def full_pdf_scan(site_folders):
     3. If a valid domain ID is found, calls the `scan_pdfs` function, passing the path to the current folder and the domain ID as arguments.
     """
     for folder in os.listdir(site_folders):
+
         domain_id = get_site_id_by_domain_name(folder)
+        print(folder, domain_id, os.path.join(site_folders, folder))
         if domain_id is not None:
             scan_pdfs(os.path.join(site_folders, folder), domain_id)
 
@@ -160,6 +168,5 @@ def single_site_pdf_scan(site_folder):
 
     if domain_id is not None:
         scan_pdfs(site_folder, domain_id)
-
 
 

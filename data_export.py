@@ -299,9 +299,12 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
         cell.value = (
             "Important Instructions:\n\n"
             "1) Please see: https://access.sfsu.edu/drupal-pdf-accessibility-review\n"
-            "2) Please update the Priority column if a PDF meets the requirements for low priority.\n"
-            "3) If you would like the DPRC to outsource remediation, please select 'Yes' in the 'DPRC Will Remediate' column. This will incur a chargeback\n"
-            "3) Please contact access@sfsu.edu for questions or to provide feedback.\n"
+            "2) The SF State ATI will provide access to Equidox, a PDF remediation tool, to all employees.\n"
+            "3) Please update the Priority column if a PDF meets the requirements for low priority. Only focus on RED highlights.\n"
+            "4) Pay Attention to the 'fingerprint' column. This is the unique identifier for each PDF. There may be duplicates on your domain.\n"
+            "5) If you would like the DPRC to outsource remediation, please select 'Yes' in the 'DPRC Will Remediate' column. This will incur a chargeback. Contact access@sfsu.edu to coordinate remediation.\n"
+            "6) These scanns only look at files hosted on drupal or box, if you feel files are missing please let us know and we can run a new scan.\n"
+            "7) Please contact access@sfsu.edu for questions to schedule training for Equidox or to provide feedback.\n"
         )
         #   H) Optional styling: wrap, center, bold, color, etc.
         cell.alignment = Alignment(wrap_text=True, horizontal='center', vertical='center')

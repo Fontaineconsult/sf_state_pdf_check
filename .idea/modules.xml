@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/sf_state_pdf_website_scan.iml" filepath="$PROJECT_DIR$/sf_state_pdf_website_scan.iml" />
+      <module fileurl="file://$USER_HOME$/Box/ATI/PDF Accessibility/Reports/build_files/templates/templates.iml" filepath="$USER_HOME$/Box/ATI/PDF Accessibility/Reports/build_files/templates/templates.iml" />
     </modules>
   </component>
 </project>

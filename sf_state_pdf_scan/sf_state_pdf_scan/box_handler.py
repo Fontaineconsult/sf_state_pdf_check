@@ -60,7 +60,7 @@ def download_from_box(box_link, loc, domain_id):
 
     direct_download_url = "https://sfsu.app.box.com/public/static/{share_hash}.{extension}"
     share_hash = box_link.split("/")[-1]
-    box_contents = get_box_contents(box_link, loc, domain_id)
+    box_contents = get_box_contents(box_link)
     print(box_contents, box_link)
     if box_contents[0]:
         print("Found PDF")
