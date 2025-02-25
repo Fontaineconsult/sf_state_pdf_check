@@ -516,16 +516,17 @@ output_dir = "sf_state_pdf_scan/sf_state_pdf_scan/spiders"
 os.makedirs(output_dir, exist_ok=True)
 
 all_sites = get_all_sites_domain_names()
+
+# Dictionary to track counts for each base site name
+site_name_counts = {}
+
 failed = []
 
 for site in all_sites:
     time.sleep(0.1)
     try:
         response = requests.get("https://" + site)
-    except requests.exceptions.SSLError:
-        failed.append(site)
-        continue
-    except requests.exceptions.ConnectionError:
+    except (requests.exceptions.SSLError, requests.exceptions.ConnectionError):
         failed.append(site)
         continue
 
@@ -533,26 +534,36 @@ for site in all_sites:
 
     site_name_tag = soup.find('span', class_='site-name')
     if site_name_tag and site_name_tag.find('a'):
-        site_name = site_name_tag.find('a').text.strip()
+        base_site_name = site_name_tag.find('a').text.strip()
     else:
-        site_name = 'SiteNameNotFound'
+        base_site_name = 'SiteNameNotFound'
 
-    # Clean the site name for the class name (e.g. "My Site" -> "MySiteSpider")
+    # Get the current count for this base site name and update it
+    count = site_name_counts.get(base_site_name, 0)
+    if count > 0:
+        unique_site_name = f"{base_site_name}{count}"
+    else:
+        unique_site_name = base_site_name
+    site_name_counts[base_site_name] = count + 1
+
+    # Use unique_site_name for further processing
+
+    # Clean the unique site name for the class name (e.g. "My Site" -> "MySiteSpider")
     site_name_cleaned_for_class = ''.join(
         word.capitalize()
-        for word in ''.join(e if e.isalnum() or e.isspace() else ' ' for e in site_name).split()
+        for word in ''.join(e if e.isalnum() or e.isspace() else ' ' for e in unique_site_name).split()
     )
 
     # Clean for the spider name, removing non-alphanumeric but allowing spaces
     site_name_cleaned_for_name = ''.join(
         e if e.isalnum() or e.isspace() else ''
-        for e in site_name
+        for e in unique_site_name
     )
 
     # Clean for the file title (replace spaces with underscores)
     site_name_cleaned_for_file_title = ''.join(
         e if e.isalnum() or e.isspace() else ''
-        for e in site_name
+        for e in unique_site_name
     ).replace(' ', '_')
 
     save_folder = site.replace('.', '-').lower()
@@ -573,7 +584,4 @@ for site in all_sites:
 
     print(f"Generated spider for {site}: {file_path}")
 
-print("FAILED", failed)
-
-
-
+print(f"Failed sites: {failed}")

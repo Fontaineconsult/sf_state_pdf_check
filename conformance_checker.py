@@ -170,3 +170,4 @@ def single_site_pdf_scan(site_folder):
         scan_pdfs(site_folder, domain_id)
 
 
+# single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\cose-sfsu-edu")

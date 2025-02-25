@@ -99,3 +99,4 @@ def create_all_pdf_reports():
 
 # create_all_pdf_reports()
 # build_all_xcel_reports()
+# build_single_xcel_report("cose.sfsu.edu")
