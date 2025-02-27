@@ -8,12 +8,12 @@ import re
 from data_import import add_pdf_report_failure
 
 
-def get_box_contents(box_url, loc, domain_id):
+def get_box_contents(box_url):
     page_request = requests.get(box_url)
-
+    print("CHECKING", box_url)
     if not page_request.ok:
-        add_pdf_report_failure(box_url, loc, domain_id, f"Couldn't download {page_request.status_code}")
-        return False, ""
+        # add_pdf_report_failure(box_url, parent_uri, domain_id, f"Couldn't download {page_request.status_code}")
+        return False, "Can't Access PDF"
 
     page_request = requests.get(box_url)
 
@@ -60,7 +60,7 @@ def download_from_box(box_link, loc, domain_id):
 
     direct_download_url = "https://sfsu.app.box.com/public/static/{share_hash}.{extension}"
     share_hash = box_link.split("/")[-1]
-    box_contents = get_box_contents(box_link, loc, domain_id)
+    box_contents = get_box_contents(box_link)
     print(box_contents, box_link)
     if box_contents[0]:
         print("Found PDF")

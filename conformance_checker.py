@@ -17,7 +17,7 @@ temp_profile_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_sc
 def download_pdf_into_memory(url, loc, domain_id):
 
     request = requests.get(url)
-
+    print("DFDSFDS", request, url)
     if request.ok:
         return request.content
     else:
@@ -52,22 +52,45 @@ def load_text_file_lines(file_path):
 
 
 def loop_through_files_in_folder(folder_path):
-    for root, dirs, files in os.walk(folder_path):
-        for file in files:
-            if file.endswith(".txt"):
-
-                return load_text_file_lines(os.path.join(folder_path,file))
+    file_path = os.path.join(folder_path, "scanned_pdfs.txt")
+    if os.path.exists(file_path):
+        return load_text_file_lines(file_path)
+    return None  # Return None if the file does not exist
 
 
 def scan_pdfs(directory, domain_id):
+
+    """
+    Scans PDF files listed in text files within a specified directory and generates accessibility reports.
+
+    Parameters:
+    directory (str): The path to the directory containing text files with PDF URLs and their locations.
+    domain_id (int): The ID of the domain associated with the PDFs.
+
+    Process:
+    1. Loads the list of PDF URLs and their locations from text files in the specified directory.
+    2. For each PDF URL and location:
+        a. Checks if an accessibility report already exists for the PDF.
+        b. If no report exists, downloads the PDF.
+        c. Generates an accessibility report using VeraPDF.
+        d. Adds the report to the database if successful, or logs a failure if not.
+    """
+
     pdf_locations = loop_through_files_in_folder(directory)
 
     if pdf_locations:
 
         for file in pdf_locations:
+            print("DFD", file)
 
             try:
-                file_url, loc = file.rstrip(" ").split(" ")
+                file_split = file.split(' ', 1)  # Splits at the last space
+
+                file_url = file_split[0]
+                loc = file_split[1].split(" ")[0]
+                print("checking", file_url, loc)
+
+
                 # parsed_url = urlparse(file_url)
                 # encoded_path = quote(parsed_url.path)
                 # file_url = urlunparse(parsed_url._replace(path=encoded_path))
@@ -105,13 +128,47 @@ def scan_pdfs(directory, domain_id):
             else:
                 print("Report already exists", file_url)
                 continue
-def full_pdf_scan(site_folders):
 
-    # get all folders in the site_folders directory
+
+def full_pdf_scan(site_folders):
+    """
+    Scans all subdirectories within the given directory for PDF files and generates accessibility reports.
+
+    Parameters:
+    site_folders (str): The path to the directory containing subdirectories to be scanned.
+
+    Process:
+    1. Iterates over each folder (subdirectory) within the `site_folders` directory.
+    2. Retrieves the domain ID for each folder by calling `get_site_id_by_domain_name`.
+    3. If a valid domain ID is found, calls the `scan_pdfs` function, passing the path to the current folder and the domain ID as arguments.
+    """
     for folder in os.listdir(site_folders):
+
         domain_id = get_site_id_by_domain_name(folder)
+        print(folder, domain_id, os.path.join(site_folders, folder))
         if domain_id is not None:
             scan_pdfs(os.path.join(site_folders, folder), domain_id)
 
 
 
+def single_site_pdf_scan(site_folder):
+    """
+    Scans a single subdirectory for PDF files and generates accessibility reports.
+
+    Parameters:
+    site_folder (str): The path to the subdirectory to be scanned.
+
+    Process:
+    1. Retrieves the domain ID for the folder by calling `get_site_id_by_domain_name`.
+    2. If a valid domain ID is found, calls the `scan_pdfs` function, passing the path to the folder and the domain ID as arguments.
+    """
+    # get last folder in site folders
+
+
+    domain_id = get_site_id_by_domain_name(os.path.basename(site_folder))
+
+    if domain_id is not None:
+        scan_pdfs(site_folder, domain_id)
+
+#
+# single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\veterans-sfsu-edu")

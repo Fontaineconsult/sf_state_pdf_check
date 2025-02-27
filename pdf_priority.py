@@ -229,56 +229,60 @@ def check_for_alt_tags(document):
         global images
 
         def check_xObject():
-
             def check_xObject_image(iXobject):
-
                 if iXobject.get("/Subtype") == "/Image":
-
                     image_bytes = iXobject.get_raw_stream_buffer()
                     hasher = hashlib.md5()
                     hasher.update(image_bytes)
                     image_hash = hasher.hexdigest()
-
-
-                    derived_id = iXobject.get("/Height") + iXobject.get("/Width") + iXobject.get("/Length")  # uniqish id for dict
-
+                    derived_id = iXobject.get("/Height") + iXobject.get("/Width") + iXobject.get("/Length")
                     if "/Alt" in node.keys() and len(str(node.get('/Alt'))) > 0:
-
                         IDDict[image_hash] = True
                     else:
                         if derived_id in IDDict and IDDict[image_hash] is True:
                             IDDict[image_hash] = True
                         else:
                             IDDict[image_hash] = False
+
             try:
                 resources = node.get('/Pg').get("/Resources")
-
                 if "/XObject" in resources.keys():
                     XObject = resources.get("/XObject")
                     for key in XObject.keys():
-                        if re.match(re.compile("/Fm\d|/P\d"), key):  # form Xobject?
+                        if re.match(re.compile("/Fm\d|/P\d"), key):  # form XObject?
                             fxobject_resources = XObject[key].get("/Resources")
                             if "/XObject" in fxobject_resources.keys():
                                 for xobject_key in fxobject_resources["/XObject"]:
-                                    if re.match(re.compile("/Im\d"), xobject_key):  # image Xobject?
+                                    if re.match(re.compile("/Im\d"), xobject_key):  # image XObject?
                                         check_xObject_image(fxobject_resources["/XObject"][xobject_key])
-
                         else:
-                            # print(repr(XObject))
                             check_xObject_image(XObject[key])
-
             except AttributeError:
                 print(repr(node.get('/Pg')))
 
-        if roleMap is not None and len(roleMap.keys()) > 0:
+        # Retrieve the /S value
+        s_value = node.get('/S')
+
+        # If s_value is a list, use its first element
+        if isinstance(s_value, list) and len(s_value) > 0:
+            s_value = s_value[0]
+
+        # Ensure s_value is of a type acceptable as a key (str or pikepdf.Name)
+        if not isinstance(s_value, (str, pikepdf.Name)):
+            # Option: convert to string or simply skip processing this node.
+            # Here we choose to skip.
+            return
+
+        # Use roleMap safely
+        if roleMap is not None and hasattr(roleMap, 'keys') and len(roleMap.keys()) > 0:
             try:
-                if roleMap[node.get('/S')] == Name("/Figure"):
+                if roleMap.get(s_value) == Name("/Figure"):
                     check_xObject()
             except KeyError:
-                if node.get('/S') == Name("/Figure"):
+                if s_value == Name("/Figure"):
                     check_xObject()
         else:
-            if node.get('/S') == Name("/Figure"):
+            if s_value == Name("/Figure"):
                 check_xObject()
 
     def recurse_k_nodes(node):
