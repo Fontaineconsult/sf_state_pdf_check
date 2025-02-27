@@ -85,9 +85,10 @@ def scan_pdfs(directory, domain_id):
 
             try:
                 file_split = file.split(' ', 1)  # Splits at the last space
-                print(file_split)
+
                 file_url = file_split[0]
-                loc = file_split[1]
+                loc = file_split[1].split(" ")[0]
+                print("checking", file_url, loc)
 
 
                 # parsed_url = urlparse(file_url)
@@ -169,5 +170,5 @@ def single_site_pdf_scan(site_folder):
     if domain_id is not None:
         scan_pdfs(site_folder, domain_id)
 
-
-# single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\cose-sfsu-edu")
+#
+# single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\veterans-sfsu-edu")

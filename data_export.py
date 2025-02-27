@@ -162,7 +162,7 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
             if not check_for_node(item_list[1]):    # (Your function to check if node link)
                 # Convert first two columns to hyperlinks
                 item_list[0] = f'=HYPERLINK("{item[0]}", "{item[0]}")'
-                item_list[1] = f'=HYPERLINK("{item[1]}", "{item[1]}")'
+                item_list[1] = f'=HYPERLINK("{item[1]}", "{item[1].split(" ")[0]}")' # remove accidental datatime info aadded
 
                 # Truncate the 4th item (index 3) to 6 characters
                 item_list[3] = item[3][0:6]
