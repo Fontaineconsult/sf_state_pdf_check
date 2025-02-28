@@ -200,33 +200,12 @@ def check_for_alt_tags(document):
 
     if not check_if_tagged(document):
         raise Exception("PDF Not Tagged")
-    # print(repr(document.Root.get("/Names")))
 
+    MAX_DEPTH = 100  # maximum allowed recursion depth
 
-    def recurse_a_node(node, parent):
-
-        if isinstance(node, Dictionary):
-
-
-            if "/BBox" in node.keys():
-
-                if "/Pg" in parent.keys():
-                    global BboxCount
-                    BboxCount += 1
-                    if '/Alt' in parent.keys():
-                        document_photos.append(True)
-                    else:
-                        document_photos.append(False)
-            if '/K' in node.keys():
-                recurse_k_nodes(node)
-
-        if isinstance(node, Array):
-
-            for each in node:
-                recurse_a_node(each, parent)
-
-    def recurse_s_node(node):
-        global images
+    def recurse_s_node(node, depth=0):
+        if depth > MAX_DEPTH:
+            return
 
         def check_xObject():
             def check_xObject_image(iXobject):
@@ -260,20 +239,14 @@ def check_for_alt_tags(document):
             except AttributeError:
                 print(repr(node.get('/Pg')))
 
-        # Retrieve the /S value
+        # Retrieve the /S value and handle list types
         s_value = node.get('/S')
-
-        # If s_value is a list, use its first element
         if isinstance(s_value, list) and len(s_value) > 0:
             s_value = s_value[0]
-
-        # Ensure s_value is of a type acceptable as a key (str or pikepdf.Name)
         if not isinstance(s_value, (str, pikepdf.Name)):
-            # Option: convert to string or simply skip processing this node.
-            # Here we choose to skip.
             return
 
-        # Use roleMap safely
+        # Safe lookup in roleMap
         if roleMap is not None and hasattr(roleMap, 'keys') and len(roleMap.keys()) > 0:
             try:
                 if roleMap.get(s_value) == Name("/Figure"):
@@ -285,37 +258,31 @@ def check_for_alt_tags(document):
             if s_value == Name("/Figure"):
                 check_xObject()
 
-    def recurse_k_nodes(node):
+    def recurse_k_nodes(node, depth=0):
+        if depth > MAX_DEPTH:
+            return
 
         if isinstance(node, Dictionary):
             if "/K" in node.keys():
-                recurse_k_nodes(node.get('/K'))
-            # if "/A" in node.keys():
-            #     recurse_a_node(node.get("/A"), node)
+                # Recurse on the /K entry (it may be a single object or a collection)
+                recurse_k_nodes(node.get('/K'), depth + 1)
             if "/S" in node.keys():
-                recurse_s_node(node)
-
-        if isinstance(node, Array):
+                recurse_s_node(node, depth + 1)
+        elif isinstance(node, Array):
             for each in node:
                 if isinstance(each, Dictionary):
-                    # print((each.keys()))
                     if "/K" in each.keys():
-                        recurse_k_nodes(each.get("/K"))
-
-                    # if "/A" in each.keys():
-                    #     recurse_a_node(each.get("/A"), each)
-
+                        recurse_k_nodes(each.get("/K"), depth + 1)
                     if "/S" in each.keys():
-                        recurse_s_node(each)
+                        recurse_s_node(each, depth + 1)
+                elif isinstance(each, Array):
+                    recurse_k_nodes(each, depth + 1)
 
-                if isinstance(each, Array):
-                    recurse_k_nodes(each)
-
-    recurse_k_nodes(root)
+    # Start the recursion from the root, with depth=0.
+    recurse_k_nodes(root, 0)
 
     for figure in IDDict:
         document_photos.append(IDDict[figure])
-
     return document_photos
 
 
