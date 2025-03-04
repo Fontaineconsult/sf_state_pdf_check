@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .site-list, .metrics-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .site-item, .metrics-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            flex: 1 1 200px;
+            min-width: 150px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .site-link {
+            text-decoration: none;
+            color: #0056b3;
+            font-weight: bold;
+            display: block;
+            padding: 5px;
+        }
+
+        .site-link:focus, .site-link:hover {
+            text-decoration: underline;
+            outline: 2px solid #0056b3;
+            background-color: #e7f1ff;
+        }
+
+        .pdf-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .pdf-table th, .pdf-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .pdf-table th {
+            background-color: #f2f2f2;
+        }
+
+        /* Highlight high-priority rows */
+        .high-priority {
+            background-color: #ffcccc !important;
+            font-weight: bold;
+        }
+
+        /* Truncate long PDF names */
+        .truncate {
+            max-width: 200px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .status-pass {
+            color: green;
+            font-weight: bold;
+        }
+
+        .status-fail {
+            color: red;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>{{ title }}</h1>
+
+<!-- Metrics Section -->
+<section id="metrics">
+    <h2>Metrics</h2>
+    <ul>
+        <li><strong>Total PDFs:</strong> {{ metrics.total_pdfs }}</li>
+        <li><strong>Total Failing PDFs:</strong> {{ metrics.total_failing }}</li>
+    </ul>
+    <h3>Top 20 Sites with Failures</h3>
+    <ol>
+        {% for site, count in metrics.top_20_sites %}
+        <li>{{ site }} - {{ count }} failing PDFs</li>
+        {% endfor %}
+    </ol>
+</section>
+
+<hr>
+
+<p>Click on a site to navigate to its section.</p>
+<ul class="site-list">
+    {% for site in sites %}
+    <li class="site-item">
+        <a class="site-link" href="#{{ site | replace('.', '-') }}">{{ site }}</a>
+    </li>
+    {% endfor %}
+</ul>
+
+<hr>
+
+{% for site, details in site_details.items() %}
+<section id="{{ site | replace('.', '-') }}">
+    <h2>{{ site }}</h2>
+
+    <h3>PDF Accessibility Report</h3>
+    {% if details.pdf_reports %}
+    <table class="pdf-table">
+        <thead>
+        <tr>
+            <th style="width: 220px;">PDF File</th>
+            <th>Parent Page</th>
+            <th>Fingerprint</th>
+            <th>Scanned Date</th>
+            <th>Errors/Page</th>
+            <th>Tagged</th>
+            <th>Text Type</th>
+            <th>Language Set</th>
+            <th>Page Count</th>
+            <th>Has Form</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for pdf in details.pdf_reports %}
+        <tr class="{% if pdf.high_priority %}high-priority{% endif %}">
+            <td class="truncate" title="{{ pdf.pdf_uri }}">
+                {% if pdf.pdf_uri %}
+                <a href="{{ pdf.pdf_uri }}" target="_blank">{{ pdf.pdf_uri.split('/')[-1] }}</a>
+                {% else %}
+                <span style="color: red;">No Link</span>
+                {% endif %}
+            </td>
+            <td><a href="{{ pdf.parent_uri }}" target="_blank">Parent Page</a></td>
+            <td title="{{ pdf.full_file_hash }}">{{ pdf.file_hash }}</td>
+            <td>{{ pdf.scanned_date }}</td>
+            <td>{{ pdf.errors_per_page }}</td>
+            <td>{{ "Yes" if pdf.tagged == 1 else "No" }}</td>
+            <td>{{ pdf.pdf_text_type }}</td>
+            <td>{{ "Yes" if pdf.language_set == 1 else "No" }}</td>
+            <td>{{ pdf.page_count }}</td>
+            <td>{{ "Yes" if pdf.has_form == 1 else "No" }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</section>
+<hr>
+{% endfor %}
+
+</body>
+</html>

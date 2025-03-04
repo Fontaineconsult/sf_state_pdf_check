@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS drupal_pdf_files (
     scanned_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     drupal_site_id INTEGER NOT NULL,
     file_hash TEXT,
+    pdf_returns_404 Boolean DEFAULT FALSE,
+    parent_returns_404 Boolean DEFAULT FALSE,
     FOREIGN KEY (drupal_site_id) REFERENCES drupal_site(id)
 );
 """
