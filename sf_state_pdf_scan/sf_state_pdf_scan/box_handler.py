@@ -4,7 +4,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 import re
-
+import lxml
 from data_import import add_pdf_report_failure
 
 
@@ -78,7 +78,8 @@ def download_from_box(box_link, loc, domain_id, head=False):
 
     box_contents = get_box_contents(box_link)
     print(f"Box contents: {box_contents} for link: {box_link}")
-
+    if box_contents is None:
+        return False, ""
     if box_contents[0]:
         print("Found PDF")
         download_url = direct_download_url.format(share_hash=share_hash, extension="pdf")

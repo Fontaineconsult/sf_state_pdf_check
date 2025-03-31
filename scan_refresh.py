@@ -3,13 +3,58 @@ import requests
 
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import box_share_pattern_match, download_from_box
 
+def check_box_pdf_status(pdf_uri):
+    """
+    For a Box share link, obtain the direct download URL and check its status.
+    If the initial HEAD request returns 302, follow the 'Location' header and do another HEAD.
 
-def refresh_status():
+    Parameters:
+        pdf_uri (str): The original Box share link.
+
+    Returns:
+        (bool, int or None): A tuple where the first element is True if the final response is 200,
+                             and the second element is the final status code (or None if an error occurred).
+    """
+    download_url = download_from_box(pdf_uri, loc="", domain_id=None, head=True)
+    if not isinstance(download_url, str) or not download_url:
+        print(f"Failed to obtain download link for Box share: {pdf_uri}")
+        return False, None
+
+    try:
+        response = requests.head(download_url, timeout=10, allow_redirects=False)
+        print(f"Initial Box HEAD status for URL {download_url}: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching Box PDF download URL ({download_url}): {e}")
+        return False, None
+
+    if response.status_code == 302:
+        new_url = response.headers.get("Location")
+        if new_url:
+            print(f"Following redirect to: {new_url}")
+            try:
+                final_response = requests.head(new_url, timeout=10)
+                print(f"Final Box HEAD status for URL {new_url}: {final_response.status_code}")
+                return final_response.status_code == 200, final_response.status_code
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching final Box PDF URL ({new_url}): {e}")
+                return False, None
+        else:
+            print("Redirect response did not contain a Location header.")
+            return False, response.status_code
+    else:
+        # If the status is not a redirect, check if it is 200.
+        return response.status_code == 200, response.status_code
+
+def refresh_status(box_only=False):
     """
     Loop through all PDFs and their parent URIs, making HTTP HEAD requests to check their status.
-    For PDF URIs that are Box share links, obtain the direct download URL using download_from_box (head=True)
-    and perform the HEAD request on that URL.
-    If a URL returns a 404 (or cannot be reached), set the corresponding flag in the database.
+    If box_only is True, only PDF URIs that are Box share links are checked and no other URLs are processed.
+    For Box share links, obtain the direct download URL using download_from_box (head=True)
+    and perform the HEAD request on that URL. If a URL returns a 404 (or cannot be reached),
+    set the corresponding flag in the database.
+
+    Parameters:
+        box_only (bool): If True, only check PDF URIs that are Box share links. Defaults to False.
     """
     conn = sqlite3.connect('drupal_pdfs.db')
     cursor = conn.cursor()
@@ -30,52 +75,53 @@ def refresh_status():
             print(f"Skipping problematic URIs for ID {pdf_id}: '{pdf_uri}', '{pdf_parent}'")
             continue
 
-        # Check PDF URL status
-        if box_share_pattern_match(pdf_uri):
-            # PDF URI is a Box share link
-            print(f"PDF URI is a Box share link: {pdf_uri}")
-            download_url = download_from_box(pdf_uri, loc="", domain_id=None, head=True)
-            if not isinstance(download_url, str) or not download_url:
-                print(f"Failed to obtain download link for Box share: {pdf_uri}")
-                cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (1, pdf_id))
+        if box_only:
+            # Only process Box share links in box_only mode.
+            if box_share_pattern_match(pdf_uri):
+                print(f"PDF URI is a Box share link: {pdf_uri}")
+                is_ok, status_code = check_box_pdf_status(pdf_uri)
+                if not is_ok:
+                    cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (1, pdf_id))
+                else:
+                    cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (0, pdf_id))
             else:
-                print(f"Checking Box PDF download URL: {download_url}")
+                print(f"Skipping non-Box PDF URI for ID {pdf_id}: {pdf_uri}")
+            # In box_only mode, skip parent URL checks.
+        else:
+            # Process Box share links
+            if box_share_pattern_match(pdf_uri):
+                print(f"PDF URI is a Box share link: {pdf_uri}")
+                is_ok, status_code = check_box_pdf_status(pdf_uri)
+                if not is_ok:
+                    cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (1, pdf_id))
+                else:
+                    cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (0, pdf_id))
+            else:
+                # Regular PDF URI check
                 try:
-                    box_response = requests.head(download_url, timeout=10)
-                    print(f"Box PDF download URL status code: {box_response.status_code}")
-                    if box_response.status_code == 404:
+                    print(f"Checking PDF URL: {pdf_uri}")
+                    pdf_response = requests.head(pdf_uri, timeout=10)
+                    print(f"PDF URL status code: {pdf_response.status_code}")
+                    if pdf_response.status_code == 404:
                         cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (1, pdf_id))
                     else:
                         cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (0, pdf_id))
                 except requests.exceptions.RequestException as e:
-                    print(f"Error fetching Box PDF download URL ({download_url}): {e}")
+                    print(f"Error fetching PDF URL ({pdf_uri}): {e}")
                     cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (1, pdf_id))
-        else:
-            # Regular PDF URI (not a Box link)
-            try:
-                print(f"Checking PDF URL: {pdf_uri}")
-                pdf_response = requests.head(pdf_uri, timeout=10)
-                print(f"PDF URL status code: {pdf_response.status_code}")
-                if pdf_response.status_code == 404:
-                    cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (1, pdf_id))
-                else:
-                    cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (0, pdf_id))
-            except requests.exceptions.RequestException as e:
-                print(f"Error fetching PDF URL ({pdf_uri}): {e}")
-                cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (1, pdf_id))
 
-        # Check Parent URL status using HEAD request
-        try:
-            print(f"Checking Parent URL: {pdf_parent}")
-            parent_response = requests.head(pdf_parent, timeout=10)
-            print(f"Parent URL status code: {parent_response.status_code}")
-            if parent_response.status_code == 404:
+            # Check Parent URL status using HEAD request for non-box_only mode
+            try:
+                print(f"Checking Parent URL: {pdf_parent}")
+                parent_response = requests.head(pdf_parent, timeout=10)
+                print(f"Parent URL status code: {parent_response.status_code}")
+                if parent_response.status_code == 404:
+                    cursor.execute("UPDATE drupal_pdf_files SET parent_returns_404 = ? WHERE id = ?", (1, pdf_id))
+                else:
+                    cursor.execute("UPDATE drupal_pdf_files SET parent_returns_404 = ? WHERE id = ?", (0, pdf_id))
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching Parent URL ({pdf_parent}): {e}")
                 cursor.execute("UPDATE drupal_pdf_files SET parent_returns_404 = ? WHERE id = ?", (1, pdf_id))
-            else:
-                cursor.execute("UPDATE drupal_pdf_files SET parent_returns_404 = ? WHERE id = ?", (0, pdf_id))
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching Parent URL ({pdf_parent}): {e}")
-            cursor.execute("UPDATE drupal_pdf_files SET parent_returns_404 = ? WHERE id = ?", (1, pdf_id))
 
         print(f"Finished processing record ID {pdf_id}")
 
@@ -83,3 +129,6 @@ def refresh_status():
     print("\nAll records processed. Changes committed to the database.")
     conn.close()
     print("Database connection closed.")
+
+# Example usage:
+refresh_status(box_only=True)

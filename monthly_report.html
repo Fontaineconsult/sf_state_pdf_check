@@ -2,168 +2,347 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ title }}</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+        :root {
+            /* Color Palette for basic styling */
+            --primary: #231161;        /* Pantone 2755C */
+            --primary-tint: #231161;     /* Using same for tint per your update */
+            --accent: #C99700;          /* Pantone 117C */
+            --accent-tint: #E9D597;      /* Pantone 117C 60% TINT */
+            --background: #ffffff;
+            --secondary: #f8f9fa;
+            --font-family: "Roboto", sans-serif;
         }
-
-        .site-list, .metrics-list {
+        body {
+            background-color: var(--background);
+            font-family: var(--font-family), sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: var(--primary-tint);
+            margin-top: 0;
+        }
+        h3 {
+            color: var(--accent);
+            margin-top: 0;
+        }
+        section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: var(--secondary);
+            border-radius: 8px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        /* Combined Instructions and Metrics container */
+        #combined-stats {
             display: flex;
             flex-wrap: wrap;
+            gap: 20px;
+        }
+        /* New Instructions container */
+        #combined-stats > .instructions {
+            flex: 1 1 300px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        /* Metrics container remains */
+        #combined-stats > .metrics {
+            flex: 1 1 300px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        /* Tighter Metrics and Stats Lists */
+        .metrics-list, .stats-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: center;
+        }
+        /* Updated Metrics List: 2-column grid layout */
+        .metrics-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+        .metrics-list li, .stats-list li {
+            background-color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            font-size: 0.9em;
+        }
+        /* Site Navigation Section: 5-column grid */
+        .site-list {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
             gap: 10px;
             list-style: none;
             padding: 0;
+            margin: 0;
         }
-
-        .site-item, .metrics-item {
-            background-color: #f8f9fa;
+        .site-item {
+            background-color: #e9d597;
+            border: thin solid var(--primary);
             padding: 10px;
-            border-radius: 5px;
+            border-radius: 4px;
             text-align: center;
-            flex: 1 1 200px;
-            min-width: 150px;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
         }
-
         .site-link {
             text-decoration: none;
-            color: #0056b3;
+            color: var(--primary);
             font-weight: bold;
             display: block;
-            padding: 5px;
+            padding: 5px 0;
         }
-
-        .site-link:focus, .site-link:hover {
+        .site-link:hover,
+        .site-link:focus {
             text-decoration: underline;
-            outline: 2px solid #0056b3;
-            background-color: #e7f1ff;
         }
-
+        /* Table Styling: Revert to old colors */
         .pdf-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 15px;
         }
-
-        .pdf-table th, .pdf-table td {
+        .pdf-table th,
+        .pdf-table td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
             text-align: left;
         }
-
         .pdf-table th {
             background-color: #f2f2f2;
         }
-
-        /* Highlight high-priority rows */
-        .high-priority {
-            background-color: #ffcccc !important;
+        /* Classes for passing and failing PDFs */
+        .status-pass {
+            background-color: #d0ffd0;
             font-weight: bold;
         }
-
-        /* Truncate long PDF names */
+        .status-fail {
+            background-color: #ffe0e0;
+            font-weight: bold;
+        }
+        /* Truncate long PDF names with ellipsis, showing the end of the text */
         .truncate {
-            max-width: 200px;
+            max-width: 220px;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
+            direction: rtl;
+            text-align: left;
+        }
+        .ltr-tooltip {
+            direction: ltr;
+        }
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .pdf-table th,
+            .pdf-table td {
+                font-size: 14px;
+            }
+            .metrics-list li, .stats-list li {
+                font-size: 0.8em;
+                margin: 3px 5px;
+                padding: 4px 8px;
+            }
+            /* For site navigation on small screens, use 2 columns */
+            .site-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
         }
 
-        .status-pass {
-            color: green;
-            font-weight: bold;
-        }
 
-        .status-fail {
-            color: red;
-            font-weight: bold;
+        .instructions-group p,
+        .instructions li {
+            font-size: 14px !important;
         }
-
     </style>
 </head>
 <body>
 
-<h1>{{ title }}</h1>
+<!-- Updated Header Div for Better Title Customization -->
+<header class="page-header" tabindex="0" style="background-color: var(--primary-tint); color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 30px; text-align: center;">
+    <div class="header-content">
+        <h1 style="color: white; margin-bottom: 0">Drupal PDF Accessibility Review (D-PAR)</h1>
+        <p style="color: white; margin-top: 0">SF State Accessible Technology Initiative</p>
+        {% if tagline %}
+        <p class="tagline" style="font-size: 1.2em; font-style: italic; margin-top: 10px;">{{ tagline }}</p>
+        {% endif %}
+    </div>
+</header>
 
-<!-- Metrics Section -->
-<section id="metrics">
-    <h2>Metrics</h2>
-    <ul>
-        <li><strong>Total PDFs:</strong> {{ metrics.total_pdfs }}</li>
-        <li><strong>Total Failing PDFs:</strong> {{ metrics.total_failing }}</li>
+<!-- Combined Instructions and Metrics Section -->
+<section id="combined-stats" tabindex="0">
+    <div class="instructions">
+        <h2>PDF Accessibility Remediation Steps</h2>
+        <div class="instructions-group">
+            <h3>Overview</h3>
+            <p>This PDF accessibility report was generated by crawling all SF State drupal web domains.
+                It includes PDFs stored on Drupal, any externally linked PDF document, and PDFs hosted on Box. Domains with PDFs are linked below. </p>
+        </div>
+        <div class="instruction-group">
+            <h3>Get Started</h3>
+            <ul>
+                <li>The SF State ATI will provide access to Equidox to any SF State employee as a self-service remediation tool. Email <a href="mailto:access@sfsu.edu">access@sfsu.edu</a> to request an account.</li>
+                <li>Review your site's <a href="#site-nav">PDF Conformance Report</a>.</li>
+                <li>Identify a team contact by <strong>April 11, 2025</strong>.</li>
+            </ul>
+        </div>
+
+        <div class="instruction-group">
+            <h3>Prioritize PDFs</h3>
+            <ul>
+                <li><strong>High Priority:</strong> Forms, vital services, events, high traffic pages.</li>
+                <li><strong>Low Priority:</strong> Outdated, unused, non-critical info, "/node/" paths.</li>
+                <li><strong>Remove:</strong> Broken or irrelevant links/files.</li>
+            </ul>
+        </div>
+
+        <div class="instruction-group">
+            <h3>Remediation Guidelines</h3>
+            <ul>
+                <li><strong>Tag PDFs</strong> for screen reader compatibility.</li>
+                <li>Provide <strong>text alternatives</strong> for images/charts.</li>
+                <li>Adjust <strong>logical reading order</strong>.</li>
+                <li>Use proper <strong>form labels</strong> and interactive fields.</li>
+                <li>Use clear <strong>headings and structured tags</strong>.</li>
+            </ul>
+        </div>
+
+        <div class="instruction-group">
+            <h3>Validation & Support</h3>
+            <ul>
+                <li>Check with Adobe Acrobat’s Accessibility Checker or PAC.</li>
+                <li>Test using NVDA or JAWS screen readers.</li>
+                <li>Request DPRC remediation (cost recovery chargeback applies, ~2-week turnaround).</li>
+            </ul>
+        </div>
+
+        <p class="help-note">
+            Questions or assistance: <a href="mailto:access@sfsu.edu">access@sfsu.edu</a>
+        </p>
+    </div>
+    <div class="metrics" tabindex="0">
+        <h2>Metrics (Per Site)</h2>
+        <!-- Moved Overall PDF Stats list into Metrics container -->
+        <div class="overall-stats">
+            <h3>Overall PDF Stats</h3>
+            <ul class="stats-list">
+                <li><strong>Total PDF Instances:</strong> {{ stats.total_pdf_instances }}</li>
+                <li><strong>Total Unique PDFs:</strong> {{ stats.total_unique_pdfs }}</li>
+                <li><strong>Total Failing PDFs:</strong> {{ stats.total_high_priority }}</li>
+            </ul>
+        </div>
+        <h3>Top 20 Sites with Failures</h3>
+        <ol class="metrics-list">
+            {% for site, count in metrics.top_20_sites %}
+            <li>
+                <a class="site-link" href="#{{ site | replace('.', '-') }}">
+                    {{ site }} - {{ count }} failing PDFs
+                </a>
+            </li>
+            {% endfor %}
+        </ol>
+    </div>
+</section>
+
+<!-- Site Navigation Section (5 columns) -->
+<nav id="site-nav" aria-label="Site Navigation">
+    <p style="text-align: center;">Click on a site to navigate to its section.</p>
+    <ul class="site-list">
+        {% for site in site_pdf_counts %}
+        <li class="site-item">
+            <a class="site-link" href="#{{ site.domain_name | replace('.', '-') }}">
+                {{ site.domain_name }} ({{ site.pdf_count }})
+            </a>
+        </li>
+        {% endfor %}
     </ul>
-    <h3>Top 20 Sites with Failures</h3>
-    <ol>
-        {% for site, count in metrics.top_20_sites %}
-        <li>{{ site }} - {{ count }} failing PDFs</li>
-        {% endfor %}
-    </ol>
-</section>
+</nav>
 
-<hr>
-
-<p>Click on a site to navigate to its section.</p>
-<ul class="site-list">
-    {% for site in sites %}
-    <li class="site-item">
-        <a class="site-link" href="#{{ site | replace('.', '-') }}">{{ site }}</a>
-    </li>
+<!-- Per-Site PDF Report Sections -->
+<main id="main-content">
+    {% for site, details in site_details.items() %}
+    <section id="{{ site | replace('.', '-') }}">
+        <h2><a href="https://{{ site }}">{{ site }}</a></h2>
+        {% if not details.pdf_reports %}
+        <h3>No PDFs found on this site</h3>
+        {% endif %}
+        {% if details.pdf_reports %}
+        <h3>PDF Accessibility Report for {{ site }}</h3>
+        <table class="pdf-table sortable" data-sortable>
+            <caption>PDF Accessibility Report for {{ site }}</caption>
+            <thead>
+            <tr>
+                <th>#</th>
+                <th style="width: 220px;">PDF File</th>
+                <th>Location</th>
+                <th>Fingerprint</th>
+                <th>Scanned Date</th>
+                <th>Errors/Page</th>
+                <th>Tagged</th>
+                <th>Text Type</th>
+                <th>Language Set</th>
+                <th>Page Count</th>
+                <th>Has Form</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for pdf in details.pdf_reports %}
+            <tr class="{% if pdf.high_priority %}status-fail{% else %}status-pass{% endif %}">
+                <td>{{ loop.index }}</td>
+                <td class="truncate">
+                    {% if pdf.pdf_uri %}
+                    <a class="ltr-tooltip" href="{{ pdf.pdf_uri }}" target="_blank" title="{{ pdf.pdf_uri }}">
+                        {{ pdf.pdf_uri.split('/')[-1] }}
+                    </a>
+                    {% else %}
+                    <span style="color: red;">No Link</span>
+                    {% endif %}
+                </td>
+                <td><a href="{{ pdf.parent_uri }}" target="_blank">Location</a></td>
+                <td title="{{ pdf.full_file_hash }}">{{ pdf.file_hash }}</td>
+                <td>{{ pdf.scanned_date }}</td>
+                <td>{{ pdf.errors_per_page }}</td>
+                <td>{{ "Yes" if pdf.tagged == 1 else "No" }}</td>
+                <td>{{ pdf.pdf_text_type }}</td>
+                <td>{{ "Yes" if pdf.language_set == 1 else "No" }}</td>
+                <td>{{ pdf.page_count }}</td>
+                <td>{{ "Yes" if pdf.has_form == 1 else "No" }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </section>
+    <hr>
     {% endfor %}
-</ul>
+</main>
 
-<hr>
 
-{% for site, details in site_details.items() %}
-<section id="{{ site | replace('.', '-') }}">
-    <h2>{{ site }}</h2>
-
-    <h3>PDF Accessibility Report</h3>
-    {% if details.pdf_reports %}
-    <table class="pdf-table">
-        <thead>
-        <tr>
-            <th style="width: 220px;">PDF File</th>
-            <th>Parent Page</th>
-            <th>Fingerprint</th>
-            <th>Scanned Date</th>
-            <th>Errors/Page</th>
-            <th>Tagged</th>
-            <th>Text Type</th>
-            <th>Language Set</th>
-            <th>Page Count</th>
-            <th>Has Form</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for pdf in details.pdf_reports %}
-        <tr class="{% if pdf.high_priority %}high-priority{% endif %}">
-            <td class="truncate" title="{{ pdf.pdf_uri }}">
-                {% if pdf.pdf_uri %}
-                <a href="{{ pdf.pdf_uri }}" target="_blank">{{ pdf.pdf_uri.split('/')[-1] }}</a>
-                {% else %}
-                <span style="color: red;">No Link</span>
-                {% endif %}
-            </td>
-            <td><a href="{{ pdf.parent_uri }}" target="_blank">Parent Page</a></td>
-            <td title="{{ pdf.full_file_hash }}">{{ pdf.file_hash }}</td>
-            <td>{{ pdf.scanned_date }}</td>
-            <td>{{ pdf.errors_per_page }}</td>
-            <td>{{ "Yes" if pdf.tagged == 1 else "No" }}</td>
-            <td>{{ pdf.pdf_text_type }}</td>
-            <td>{{ "Yes" if pdf.language_set == 1 else "No" }}</td>
-            <td>{{ pdf.page_count }}</td>
-            <td>{{ "Yes" if pdf.has_form == 1 else "No" }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
-</section>
-<hr>
-{% endfor %}
-
+<script>
+    /*! sortable.js 0.8.0 */
+    (function(){var a,b,c,d,e,f,g;a="table[data-sortable]",d=/^-?[£$¤]?[\d,.]+%?$/,g=/^\s+|\s+$/g,c=["click"],f="ontouchstart"in document.documentElement,f&&c.push("touchstart"),b=function(a,b,c){return null!=a.addEventListener?a.addEventListener(b,c,!1):a.attachEvent("on"+b,c)},e={init:function(b){var c,d,f,g,h;for(null==b&&(b={}),null==b.selector&&(b.selector=a),d=document.querySelectorAll(b.selector),h=[],f=0,g=d.length;g>f;f++)c=d[f],h.push(e.initTable(c));return h},initTable:function(a){var b,c,d,f,g,h;if(1===(null!=(h=a.tHead)?h.rows.length:void 0)&&"true"!==a.getAttribute("data-sortable-initialized")){for(a.setAttribute("data-sortable-initialized","true"),d=a.querySelectorAll("th"),b=f=0,g=d.length;g>f;b=++f)c=d[b],"false"!==c.getAttribute("data-sortable")&&e.setupClickableTH(a,c,b);return a}},setupClickableTH:function(a,d,f){var g,h,i,j,k,l;for(i=e.getColumnType(a,f),h=function(b){var c,g,h,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D;if(b.handled===!0)return!1;for(b.handled=!0,m="true"===this.getAttribute("data-sorted"),n=this.getAttribute("data-sorted-direction"),h=m?"ascending"===n?"descending":"ascending":i.defaultSortDirection,p=this.parentNode.querySelectorAll("th"),s=0,w=p.length;w>s;s++)d=p[s],d.setAttribute("data-sorted","false"),d.removeAttribute("data-sorted-direction");if(this.setAttribute("data-sorted","true"),this.setAttribute("data-sorted-direction",h),o=a.tBodies[0],l=[],m){for(D=o.rows,v=0,z=D.length;z>v;v++)g=D[v],l.push(g);for(l.reverse(),B=0,A=l.length;A>B;B++)k=l[B],o.appendChild(k)}else{for(r=null!=i.compare?i.compare:function(a,b){return b-a},c=function(a,b){return a[0]===b[0]?a[2]-b[2]:i.reverse?r(b[0],a[0]):r(a[0],b[0])},C=o.rows,j=t=0,x=C.length;x>t;j=++t)k=C[j],q=e.getNodeValue(k.cells[f]),null!=i.comparator&&(q=i.comparator(q)),l.push([q,k,j]);for(l.sort(c),u=0,y=l.length;y>u;u++)k=l[u],o.appendChild(k[1])}return"function"==typeof window.CustomEvent&&"function"==typeof a.dispatchEvent?a.dispatchEvent(new CustomEvent("Sortable.sorted",{bubbles:!0})):void 0},l=[],j=0,k=c.length;k>j;j++)g=c[j],l.push(b(d,g,h));return l},getColumnType:function(a,b){var c,d,f,g,h,i,j,k,l,m,n;if(d=null!=(l=a.querySelectorAll("th")[b])?l.getAttribute("data-sortable-type"):void 0,null!=d)return e.typesObject[d];for(m=a.tBodies[0].rows,h=0,j=m.length;j>h;h++)for(c=m[h],f=e.getNodeValue(c.cells[b]),n=e.types,i=0,k=n.length;k>i;i++)if(g=n[i],g.match(f))return g;return e.typesObject.alpha},getNodeValue:function(a){var b;return a?(b=a.getAttribute("data-value"),null!==b?b:"undefined"!=typeof a.innerText?a.innerText.replace(g,""):a.textContent.replace(g,"")):""},setupTypes:function(a){var b,c,d,f;for(e.types=a,e.typesObject={},f=[],c=0,d=a.length;d>c;c++)b=a[c],f.push(e.typesObject[b.name]=b);return f}},e.setupTypes([{name:"numeric",defaultSortDirection:"descending",match:function(a){return a.match(d)},comparator:function(a){return parseFloat(a.replace(/[^0-9.-]/g,""),10)||0}},{name:"date",defaultSortDirection:"ascending",reverse:!0,match:function(a){return!isNaN(Date.parse(a))},comparator:function(a){return Date.parse(a)||0}},{name:"alpha",defaultSortDirection:"ascending",match:function(){return!0},compare:function(a,b){return a.localeCompare(b)}}]),setTimeout(e.init,0),"function"==typeof define&&define.amd?define(function(){return e}):"undefined"!=typeof exports?module.exports=e:window.Sortable=e}).call(this);
+</script>
 </body>
 </html>

@@ -73,7 +73,7 @@ def delete_duplicate_entries():
 
     # Read the get_all_sites.sql file, which contains:
     # select domain_name from drupal_site;
-    with open("get_all_sites.sql", "r") as f:
+    with open("sql/get_all_sites.sql", "r") as f:
         get_sites_query = f.read().strip()
 
     # Execute the query to fetch all site domain names.
@@ -81,7 +81,7 @@ def delete_duplicate_entries():
     sites = cursor.fetchall()  # Each row is a tuple (domain_name,)
 
     # Read the delete_duplicates.sql file which contains our delete query template.
-    with open("delete_duplicates.sql", "r") as f:
+    with open("sql/delete_duplicates.sql", "r") as f:
         delete_query_template = f.read()
 
     # Loop through each site and execute the delete query with the proper substitution.
@@ -97,4 +97,4 @@ def delete_duplicate_entries():
     conn.close()
 
 # Example usage:
-# delete_duplicate_entries()
+delete_duplicate_entries()

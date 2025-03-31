@@ -1,9 +1,66 @@
 import math
 from jinja2 import Environment, FileSystemLoader
 from data_export import get_all_sites, get_pdfs_by_site_name
+import sqlite3
 
 # Setup Jinja2 Environment (Global)
 env = Environment(loader=FileSystemLoader('.'))
+
+def get_all_pdf_stats():
+    """
+    Reads the SQL query from 'sql/all_pdf_stats.sql' and executes it against the 'drupal_pdfs.db' database.
+    Returns a dictionary containing overall PDF statistics:
+      - total_pdf_instances
+      - total_unique_pdfs
+      - total_high_priority
+    """
+    # Open and read the SQL query from file.
+    with open("sql/all_pdf_stats.sql", "r") as file:
+        query = file.read()
+
+    # Connect to the SQLite database.
+    conn = sqlite3.connect('drupal_pdfs.db')
+    cursor = conn.cursor()
+
+    # Execute the SQL query.
+    cursor.execute(query)
+
+    # Fetch the single row result.
+    row = cursor.fetchone()
+
+    # Extract column names from the cursor description.
+    col_names = [desc[0] for desc in cursor.description]
+
+    # Create a dictionary mapping column names to their corresponding values.
+    stats = dict(zip(col_names, row))
+
+    # Close the database connection.
+    conn.close()
+
+    return stats
+
+def get_all_sites_with_pdfs():
+    """
+    Reads the SQL query from 'sql/get_all_sites_with_pdfs.sql' and executes it against the 'drupal_pdfs.db' database.
+    Returns a list of dictionaries with each site's domain name and the PDF count.
+    """
+    with open("sql/get_all_sites_with_pdfs.sql", "r") as file:
+        query = file.read()
+
+    conn = sqlite3.connect('drupal_pdfs.db')
+    cursor = conn.cursor()
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    col_names = [desc[0] for desc in cursor.description]
+    sites_with_pdfs = [dict(zip(col_names, row)) for row in rows]
+    conn.close()
+
+    return sites_with_pdfs
+
+# Example usage:
+# stats = get_all_pdf_stats()
+# sites_with_pdfs = get_all_sites_with_pdfs()
+
 
 def fetch_sites():
     """Fetch and return the list of sites."""
@@ -47,7 +104,7 @@ def sanitize_pdf_data(pdf_report):
     return {
         "pdf_uri": pdf_report.pdf_uri or "",
         "parent_uri": pdf_report.parent_uri or "",
-        "scanned_date": pdf_report.scanned_date or "N/A",
+        "scanned_date": pdf_report.scanned_date.split(" ")[0] or "N/A",
         "failed_checks": pdf_report.failed_checks or 0,
         "tagged": pdf_report.tagged or 0,
         "pdf_text_type": pdf_report.pdf_text_type or "Unknown",
@@ -115,13 +172,17 @@ def main():
     all_sites = fetch_sites()
     site_details = generate_site_details()
     metrics = compute_metrics(site_details)
+    stats = get_all_pdf_stats()  # Get overall PDF statistics from the SQL query
+    site_pdf_counts = get_all_sites_with_pdfs()  # Get sites with their respective PDF counts
 
-    # Context for the template
+    # Context for the template, including our new 'stats' and 'site_pdf_counts' data.
     context = {
         "title": "Website Accessibility Report",
         "sites": all_sites,
         "site_details": site_details,
-        "metrics": metrics
+        "metrics": metrics,
+        "stats": stats,
+        "site_pdf_counts": site_pdf_counts
     }
 
     # Render the template
