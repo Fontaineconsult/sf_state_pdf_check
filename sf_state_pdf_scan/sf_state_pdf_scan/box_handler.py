@@ -4,7 +4,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 import re
-
+import lxml
 from data_import import add_pdf_report_failure
 
 
@@ -51,38 +51,59 @@ def get_box_contents(box_url):
 
 
 temp_pdf_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp.pdf"
-def download_from_box(box_link, loc, domain_id):
 
+import re
+import requests
+
+def download_from_box(box_link, loc, domain_id, head=False):
+    """
+    Given a Box share link, either returns the direct download link (if head is True)
+    or downloads the PDF to a local path (loc) if the file is found.
+
+    Parameters:
+        box_link (str): The Box share link.
+        loc (str): The local file path where the PDF should be saved.
+        domain_id: (Unused here, but may be used for logging or further processing).
+        head (bool): If True, simply returns the direct download URL without downloading.
+
+    Returns:
+        tuple: (True, download_url or empty string) on success, (False, error_message) on failure.
+    """
     if not box_share_pattern_match(box_link):
         print("Not a valid box share link")
         return False, "Not a valid box share link"
 
-
     direct_download_url = "https://sfsu.app.box.com/public/static/{share_hash}.{extension}"
     share_hash = box_link.split("/")[-1]
+
     box_contents = get_box_contents(box_link)
-    print(box_contents, box_link)
+    print(f"Box contents: {box_contents} for link: {box_link}")
+    if box_contents is None:
+        return False, ""
     if box_contents[0]:
         print("Found PDF")
-
-
         download_url = direct_download_url.format(share_hash=share_hash, extension="pdf")
-        file = requests.get(download_url, stream=True)
-        with open(temp_pdf_path, "wb") as f:
-            f.write(file.content)
-        return True, ""
+
+        if head:
+            print("Head flag is True. Returning the download link without downloading.")
+            return download_url
+        else:
+            print(f"Downloading PDF from: {download_url}")
+            file_response = requests.get(download_url, stream=True)
+            # Assuming 'loc' is the file path where we want to save the PDF.
+            with open(loc, "wb") as f:
+                f.write(file_response.content)
+            print(f"Downloaded PDF saved to: {loc}")
+            return True, ""
     else:
+        print("Box contents not found or error occurred.")
         return False, box_contents[1]
 
-
 def box_share_pattern_match(url):
-    # Pattern to match the specific domain and extract the hash
+    # Pattern to match the specific domain and extract the hash.
     pattern = r'https:\/\/[a-zA-Z0-9.-]*\.box\.com\/s\/[a-zA-Z0-9]+'
     match = re.match(pattern, url)
+    return True if match else False
 
-    if match:
-        # If the pattern matches, return the hash
-        return True
-    else:
-        # If the pattern does not match, return None or an appropriate message
-        return False
+
+
