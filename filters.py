@@ -10,7 +10,10 @@ def check_for_node(parent_uri):
 
 def is_high_priority(data):
 
-    data = dict(data._asdict())
+    """Determine if a PDF requires review based on accessibility flags."""
+    if not isinstance(data, dict):
+        data = dict(data._asdict())
+
 
     if data['tagged'] == 0:
         return True

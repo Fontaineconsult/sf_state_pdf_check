@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     # Load all spiders from the configured spider folder
     spider_loader = spiderloader.SpiderLoader.from_settings(settings)
-    all_spiders = spider_loader.list()  # list of spider names
+    all_spiders = list(reversed(spider_loader.list()))  # list of spider names in reverse order
 
     # Turn the list into an iterator so we can get one spider at a time
     spider_iter = iter(all_spiders)
@@ -27,6 +27,7 @@ if __name__ == '__main__':
             spider_name = next(spider_iter)
         except StopIteration:
             return  # No more spiders to run
+        print(f"Running spider: {spider_name}")
         process.crawl(spider_name)  # Schedule the next spider to crawl
 
     def spider_closed(spider):

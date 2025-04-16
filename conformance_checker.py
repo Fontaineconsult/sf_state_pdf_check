@@ -17,7 +17,6 @@ temp_profile_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_sc
 def download_pdf_into_memory(url, loc, domain_id):
 
     request = requests.get(url)
-    print("DFDSFDS", request, url)
     if request.ok:
         return request.content
     else:

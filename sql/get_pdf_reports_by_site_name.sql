@@ -22,6 +22,6 @@ FROM
     pdf_report ON drupal_pdf_files.file_hash = pdf_report.pdf_hash
 
 WHERE parent_uri NOT LIKE '%/node/%' AND parent_uri NOT LIKE '%/index.php/%'
-  AND parent_returns_404 is false
+  AND parent_returns_404 is FALSE
   AND pdf_returns_404 is FALSE
   AND drupal_site.domain_name = '{site_name}';

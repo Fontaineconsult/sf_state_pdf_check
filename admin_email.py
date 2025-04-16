@@ -2,7 +2,11 @@
 import sqlite3
 import os
 import re
+from collections import defaultdict
+
 import win32com.client
+from openpyxl import load_workbook
+
 
 def sanitize_filename(filename):
     # Remove characters that are invalid in file names.
@@ -82,12 +86,112 @@ def run_sql_query(sql_file_path, template_html):
         except Exception as e:
             print(f"Error processing row {row}: {e}")
 
+
+
+
+def generate_followup_emails(excel_sheet, sql_file_path, template_html):
+    # Load the Excel workbook
+    # Load the Excel workbook
+    try:
+        wb = load_workbook(excel_sheet, read_only=True)
+        if "Second Round Followup" not in wb.sheetnames:
+            print("Sheet 'Second Round Followup' not found in the Excel file.")
+            return
+        sheet = wb["Second Round Followup"]
+    except Exception as e:
+        print(f"Error reading Excel file: {e}")
+        return
+
+    # Group domains by email address (no headers, so use fixed column indices)
+    email_to_domains = defaultdict(set)
+    try:
+        for row in sheet.iter_rows(min_row=1, values_only=True):  # Start at first row
+            domain = row[0]  # Column A
+            email = row[3]   # Column D
+            if email and domain and isinstance(email, str):
+                email_to_domains[email.strip()].add(domain.strip())
+    except Exception as e:
+        print(f"Error processing Excel data: {e}")
+        return
+
+    # Load SQL query
+    try:
+        with open(sql_file_path, 'r') as f:
+            sql_query = f.read()
+    except Exception as e:
+        print(f"Error reading SQL file: {e}")
+        return
+
+    try:
+        conn = sqlite3.connect("drupal_pdfs.db")
+        cursor = conn.cursor()
+        cursor.execute(sql_query)
+        results = cursor.fetchall()
+    except Exception as e:
+        print(f"Error executing SQL query: {e}")
+        return
+    finally:
+        conn.close()
+
+    if not results:
+        print("No results returned from SQL.")
+        return
+
+    # Map emails to names from SQL (email = row[3], name = row[1])
+    email_to_name = {}
+    for row in results:
+        if len(row) < 4 or not row[3]:
+            continue
+        email = row[3].strip()
+        name = row[1]
+        if email in email_to_domains:
+            email_to_name[email] = name
+
+    # Initialize Outlook
+    try:
+        outlook = win32com.client.Dispatch("Outlook.Application")
+    except Exception as e:
+        print(f"Error initializing Outlook: {e}")
+        return
+
+    # Output folder
+    output_folder = r"C:\Users\913678186\Box\ATI\PDF Accessibility\Follow-Up Emails"
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Generate one email per unique address
+    for email, domains in email_to_domains.items():
+        if email not in email_to_name:
+            continue  # Skip if email not matched in SQL query
+
+        name = email_to_name[email]
+        domain_list = sorted(domains)
+        domain_str = "<ul>" + "".join(f"<li>{domain}</li>" for domain in domain_list) + "</ul>"
+
+        try:
+            html_content = template_html.format(site_manager=name, domain_list=domain_str)
+
+            mail_item = outlook.CreateItem(0)
+            mail_item.To = email
+            mail_item.SentOnBehalfOfName = "access@sfsu.edu"
+            mail_item.Subject = "SF State ATI | Follow-Up: Drupal PDF Accessibility"
+            mail_item.HTMLBody = html_content
+
+            filename = sanitize_filename(f"{name}_{email}_followup.msg")
+            file_path = os.path.join(output_folder, filename)
+            mail_item.SaveAs(file_path, 3)
+
+            print(f"Saved follow-up MSG: {file_path}")
+        except Exception as e:
+            print(f"Error processing email to {email}: {e}")
+
+
+
 if __name__ == "__main__":
     # Path to the SQL file with your query.
     sql_file_path = r"C:\Users\913678186\IdeaProjects\sf_state_pdf_website_scan\sql\get_admin_contacts.sql"
 
     # Path to the HTML template file.
-    template_html_path = r"C:\Users\913678186\Box\ATI\PDF Accessibility\Reports\build_files\templates\mpp_contact_email.html"
+    template_html_path = r"C:\Users\913678186\Box\ATI\PDF Accessibility\Reports\build_files\templates\mpp_followup_contact_email.html"
 
     # Open and read the HTML template file.
     try:
@@ -97,4 +201,6 @@ if __name__ == "__main__":
         print(f"Error reading HTML template file: {e}")
         exit(1)
 
-    run_sql_query(sql_file_path, template_html)
+    generate_followup_emails(r"C:\Users\913678186\Box\ATI\PDF Accessibility\PDF Project Documents\57534520.xlsx",
+                             sql_file_path,
+                             template_html)

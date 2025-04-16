@@ -1,6 +1,13 @@
-#!/usr/bin/env python3
+
 import os
-import sqlite3
+import re
+import html
+import shutil
+import zipfile
+import requests
+from urllib.parse import unquote
+from openpyxl import load_workbook
+from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import download_from_box, box_share_pattern_match
 
 
 def delete_scans_files(root_folder):
@@ -96,5 +103,83 @@ def delete_duplicate_entries():
     # Close the database connection.
     conn.close()
 
+
+def download_all_dprc_will_remediate_pdfs_by_site(site_name):
+    box_folder = rf'C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\{site_name}'
+    box_temp_folder = os.path.join(box_folder, 'temp')
+    xlsx_file = os.path.join(box_folder, f"{site_name.split('-')[0]}-pdf-scans.xlsx")
+
+    if not os.path.exists(box_folder):
+        print(f"File does not exist: {box_folder}")
+        return
+    print(f"Found folder: {box_folder}")
+
+    # Compile hyperlink regex
+    hyperlink_pattern = re.compile(r'HYPERLINK\("([^"]+)"')
+
+    # Load workbook and sheet
+    workbook = load_workbook(xlsx_file)
+    sheet = workbook['Scanned PDFs']
+    print(f"Processing sheet: {sheet.title}")
+
+    # Prepare temp folder
+    os.makedirs(box_temp_folder, exist_ok=True)
+
+    # Download loop
+    for row in sheet.iter_rows(min_row=1, max_col=17, max_row=sheet.max_row):
+        link = row[0].value
+        high_priority = row[15].value
+        dprc_remediation = row[16].value
+
+        if dprc_remediation == "Yes" and isinstance(link, str) and link.startswith('=HYPERLINK'):
+            match = hyperlink_pattern.search(link)
+            if not match:
+                continue
+
+            first_url = match.group(1)
+            print(first_url, high_priority, dprc_remediation)
+
+            if box_share_pattern_match(first_url):
+                print("Downloading file from box…")
+                download_from_box(first_url, box_temp_folder)
+            else:
+                print("Downloading file from URL…")
+                response = requests.get(first_url, stream=True)
+                if response.status_code == 200:
+                    raw_name = os.path.basename(first_url)
+                    unescaped = html.unescape(raw_name)
+                    file_name = unquote(unescaped)
+                    file_path = os.path.join(box_temp_folder, file_name)
+                    with open(file_path, "wb") as file:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            file.write(chunk)
+
+    # --- ZIP and cleanup ---
+    # Define the ZIP filename
+    zip_name = f"{site_name}-pdf-scans.zip"
+    zip_path = os.path.join(box_folder, zip_name)
+
+    print(f"Creating ZIP archive: {zip_path}")
+    with zipfile.ZipFile(zip_path, 'w', ZIP_DEFLATED:=zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(box_temp_folder):
+            for fname in files:
+                if fname.lower().endswith('.pdf'):
+                    full_path = os.path.join(root, fname)
+                    # Store PDFs at the root of the archive, no temp/ prefix
+                    arcname = os.path.relpath(full_path, box_temp_folder)
+                    zipf.write(full_path, arcname)
+
+    print("ZIP archive created successfully.")
+
+    # Remove the temp folder
+    print(f"Removing temporary folder: {box_temp_folder}")
+    shutil.rmtree(box_temp_folder)
+    print("Temporary folder deleted.")
+
+
+# download_all_dprc_will_remediate_pdfs_by_site('cob-sfsu-edu')
+
+
+
 # Example usage:
-delete_duplicate_entries()
+# delete_duplicate_entries()

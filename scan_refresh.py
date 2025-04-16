@@ -131,4 +131,4 @@ def refresh_status(box_only=False):
     print("Database connection closed.")
 
 # Example usage:
-refresh_status(box_only=True)
+refresh_status()

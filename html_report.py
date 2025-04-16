@@ -78,7 +78,8 @@ def fetch_pdf_reports():
 
 def is_high_priority(data):
     """Determine if a PDF requires review based on accessibility flags."""
-    data = dict(data._asdict())
+    if not isinstance(data, dict):
+        data = dict(data._asdict())
 
     if data['tagged'] == 0:
         return True
@@ -137,12 +138,14 @@ def compute_metrics(site_details):
     site_failures = {}
 
     for site, details in site_details.items():
+
         pdfs = details["pdf_reports"]
+
         total_pdfs += len(pdfs)
         failing_count = 0
         for pdf in pdfs:
             # Count a PDF as failing if errors_per_page is an integer and > 0.
-            if isinstance(pdf["errors_per_page"], int) and pdf["errors_per_page"] > 0:
+            if is_high_priority(pdf):
                 failing_count += 1
         total_failing += failing_count
         site_failures[site] = failing_count
@@ -174,7 +177,7 @@ def main():
     metrics = compute_metrics(site_details)
     stats = get_all_pdf_stats()  # Get overall PDF statistics from the SQL query
     site_pdf_counts = get_all_sites_with_pdfs()  # Get sites with their respective PDF counts
-
+    print(site_pdf_counts)
     # Context for the template, including our new 'stats' and 'site_pdf_counts' data.
     context = {
         "title": "Website Accessibility Report",

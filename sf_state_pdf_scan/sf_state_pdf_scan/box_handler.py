@@ -44,7 +44,7 @@ def get_box_contents(box_url):
 
                         print(item)
                         print(item['name'])
-                        return True, box_url
+                        return True, box_url, item['name']
 
 
 
@@ -55,7 +55,7 @@ temp_pdf_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\
 import re
 import requests
 
-def download_from_box(box_link, loc, domain_id, head=False):
+def download_from_box(box_link, loc=None, domain_id=None, head=False):
     """
     Given a Box share link, either returns the direct download link (if head is True)
     or downloads the PDF to a local path (loc) if the file is found.
@@ -91,7 +91,9 @@ def download_from_box(box_link, loc, domain_id, head=False):
             print(f"Downloading PDF from: {download_url}")
             file_response = requests.get(download_url, stream=True)
             # Assuming 'loc' is the file path where we want to save the PDF.
-            with open(loc, "wb") as f:
+            if loc is None:
+                loc = temp_pdf_path
+            with open(f"{loc}/{box_contents[2]}", "wb") as f:
                 f.write(file_response.content)
             print(f"Downloaded PDF saved to: {loc}")
             return True, ""
