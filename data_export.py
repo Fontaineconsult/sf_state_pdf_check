@@ -72,9 +72,6 @@ def get_all_users_with_pdfs():
         return results
 
 
-
-
-
 def get_site_failures(site_name):
 
     with open("sql/get_failures_by_site_id.sql", 'r') as file:

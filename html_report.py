@@ -185,7 +185,8 @@ def main():
         "site_details": site_details,
         "metrics": metrics,
         "stats": stats,
-        "site_pdf_counts": site_pdf_counts
+        "site_pdf_counts": site_pdf_counts,
+        "scan_month": "April 2025"
     }
 
     # Render the template

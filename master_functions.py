@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from conformance_checker import full_pdf_scan
 from data_export import get_pdfs_by_site_name, get_all_sites, write_data_to_excel, get_site_failures
@@ -35,6 +36,15 @@ def build_single_xcel_report(site_name):
         # check if scans folder exists and if not create it
         if not os.path.exists(scans_output.format(site_folder_name)):
             os.makedirs(scans_output.format(site_folder_name))
+
+        #create a backup folder for xlxs file if it doesn't exist "backups"
+        if not os.path.exists(scans_output.format(site_folder_name) + "\\" + "backups"):
+            os.makedirs(scans_output.format(site_folder_name) + "\\" + "backups")
+
+        # move the old file to the backup folder
+        if os.path.exists(scans_output.format(site_folder_name + "\\" + f"{site_folder_name.split('-')[0]}-pdf-scans.xlsx")):
+            os.rename(scans_output.format(site_folder_name + "\\" + f"{site_folder_name.split('-')[0]}-pdf-scans.xlsx"),
+                      scans_output.format(site_folder_name) + "\\" + "backups" + "\\" + f"{site_folder_name.split('-')[0]}-pdf-scans-backup-{datetime.now().strftime('%Y-%m-%d')}.xlsx")
 
         write_data_to_excel(site_data, fail_data, scans_output.format(site_folder_name + "\\" + f"{site_folder_name.split('-')[0]}-pdf-scans.xlsx"))
 
@@ -98,5 +108,5 @@ def create_all_pdf_reports():
     full_pdf_scan(pdf_sites_folder)
 
 # create_all_pdf_reports()
-build_all_xcel_reports()
-# build_single_xcel_report("veterans.sfsu.edu")
+# build_all_xcel_reports()
+# build_single_xcel_report("gcoe.sfsu.edu")

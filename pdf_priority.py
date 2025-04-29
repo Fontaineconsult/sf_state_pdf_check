@@ -2,7 +2,7 @@ import json
 import xml.etree.ElementTree as ET
 import chardet
 import pikepdf
-from pdfminer import high_level
+# from pdfminer import high_level
 from pdfminer.layout import LTImage
 import pdfminer
 from pikepdf import Pdf, Dictionary, Array, String, Object, Name, PdfError, OutlineItem
