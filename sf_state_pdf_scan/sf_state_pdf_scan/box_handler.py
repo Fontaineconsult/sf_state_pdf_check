@@ -62,7 +62,7 @@ def download_from_box(box_link, loc=None, domain_id=None, head=False):
 
     Parameters:
         box_link (str): The Box share link.
-        loc (str): The local file path where the PDF should be saved.
+        loc (str): The web location of the PDF.
         domain_id: (Unused here, but may be used for logging or further processing).
         head (bool): If True, simply returns the direct download URL without downloading.
 
@@ -91,11 +91,10 @@ def download_from_box(box_link, loc=None, domain_id=None, head=False):
             print(f"Downloading PDF from: {download_url}")
             file_response = requests.get(download_url, stream=True)
             # Assuming 'loc' is the file path where we want to save the PDF.
-            if loc is None:
-                loc = temp_pdf_path
-            with open(f"{loc}/{box_contents[2]}", "wb") as f:
+
+            with open(temp_pdf_path, "wb") as f:
                 f.write(file_response.content)
-            print(f"Downloaded PDF saved to: {loc}")
+            print(f"Downloaded PDF saved to: {temp_pdf_path}")
             return True, ""
     else:
         print("Box contents not found or error occurred.")

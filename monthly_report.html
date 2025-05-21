@@ -241,6 +241,7 @@
                 <li><a href="https://equidox.co/pdf-solutions/pdf-accessibility-software/videos/" target="_blank">Equidox Videos</a> – Learn how to use Equidox</li>
             </ul>
         </div>
+        <p><b>IMPORTANT NOTE: Acrobat's PDF accessibility checker does not report WCAG 2.1 level violations. Do not rely on it. Use Equidox.</b></p>
 
         <div class="instructions-group">
             <h3>Validation & Support</h3>
@@ -250,10 +251,14 @@
                 <li>Request DPRC remediation. Remediation costs may be covered for high priority PDFs otherwise recovery chargeback applies. ~4-week turnaround.</li>
             </ul>
         </div>
-
+        <div class="instructions-group">
         <p class="help-note">
             Questions or assistance: <a href="mailto:access@sfsu.edu">access@sfsu.edu</a>
         </p>
+        <p>
+            * Many PDFs are linked multiple times from different locations. This number reflects the total number of links to PDFs found on all drupal domains, not the number of unique PDFs.
+        </p>
+        </div>
     </div>
     <div class="metrics" tabindex="0">
         <h2>Metrics (Per Site)</h2>
@@ -261,7 +266,7 @@
         <div class="overall-stats">
             <h3>Overall PDF Stats</h3>
             <ul class="stats-list">
-                <li><strong>Total PDF Instances:</strong> {{ stats.total_pdf_instances }}</li>
+                <li><strong>Total PDF Instances*:</strong> {{ stats.total_pdf_instances }}</li>
                 <li><strong>Total Unique PDFs:</strong> {{ stats.total_unique_pdfs }}</li>
                 <li><strong>Total Failing PDFs:</strong> {{ stats.total_high_priority }}</li>
             </ul>

@@ -119,10 +119,11 @@ def add_admin_contacts(file_path):
         header = next(csv_reader)
         for row in csv_reader:
 
-
+            print(row)
             site = row[0]
-            employee_name = row[2]
-            employee_email = row[3]
+            print("EEEESSSS", site)
+            employee_name = row[1]
+            employee_email = row[2]
             if site is None or employee_name is None or employee_email is None:
                 continue
             generated_id = f"{hash(employee_email) % 1000000000}"
@@ -132,15 +133,21 @@ def add_admin_contacts(file_path):
             first_name = full_name[0]
             last_name = " ".join(full_name[1:]) if len(full_name) > 1 else ""
 
-            print(full_name, first_name,last_name, generated_id, employee_email)
+            print("DFSDF", full_name, first_name,last_name, generated_id, employee_email)
 
             # Check if email already exists in the site_user table
             email_exists = cursor.execute("SELECT * FROM site_user WHERE email = ?", (employee_email,)).fetchone()
+            print("EEEE", site)
             site_id = cursor.execute("SELECT id FROM drupal_site WHERE domain_name = ?", (site,)).fetchone()
-            print(site_id)
+
+            # if site_id is None:
+            #     cursor.execute("INSERT INTO drupal_site (domain_name) VALUES (?)", (site,))
+            #     site_id = cursor.lastrowid
+
+
             if email_exists:
                 cursor.execute("UPDATE site_user SET is_manager = 1 WHERE email = ?", (employee_email,))
-                print("email_exists", email_exists)
+                print("email_exists", site_id[0], email_exists[0])
 
                 assignment_exists = cursor.execute("SELECT * FROM site_assignment WHERE site_id = ? AND user_id = ?", (site_id[0], email_exists[0]))
                 if not assignment_exists:

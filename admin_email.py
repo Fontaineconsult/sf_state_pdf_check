@@ -94,21 +94,23 @@ def generate_followup_emails(excel_sheet, sql_file_path, template_html):
     # Load the Excel workbook
     try:
         wb = load_workbook(excel_sheet, read_only=True)
-        if "Second Round Followup" not in wb.sheetnames:
-            print("Sheet 'Second Round Followup' not found in the Excel file.")
+        if "Third Round Followup" not in wb.sheetnames:
+            print("Sheet 'Third Round Followup' not found in the Excel file.")
             return
-        sheet = wb["Second Round Followup"]
+        sheet = wb["Third Round Followup"]
     except Exception as e:
         print(f"Error reading Excel file: {e}")
         return
 
     # Group domains by email address (no headers, so use fixed column indices)
     email_to_domains = defaultdict(set)
+
     try:
         for row in sheet.iter_rows(min_row=1, values_only=True):  # Start at first row
             domain = row[0]  # Column A
-            email = row[3]   # Column D
+            email = row[2]   # Column C
             if email and domain and isinstance(email, str):
+                print(email, domain)
                 email_to_domains[email.strip()].add(domain.strip())
     except Exception as e:
         print(f"Error processing Excel data: {e}")
@@ -127,6 +129,7 @@ def generate_followup_emails(excel_sheet, sql_file_path, template_html):
         cursor = conn.cursor()
         cursor.execute(sql_query)
         results = cursor.fetchall()
+        print("results", results)
     except Exception as e:
         print(f"Error executing SQL query: {e}")
         return
@@ -137,16 +140,19 @@ def generate_followup_emails(excel_sheet, sql_file_path, template_html):
         print("No results returned from SQL.")
         return
 
-    # Map emails to names from SQL (email = row[3], name = row[1])
+    # Map emails to names from SQL (email = row[2], name = row[1])
     email_to_name = {}
+    print(email_to_domains)
     for row in results:
-        if len(row) < 4 or not row[3]:
+        print("ROW", row)
+        if len(row) < 4 or not row[2]:
             continue
         email = row[3].strip()
         name = row[1]
+        print("EMAIL", email)
         if email in email_to_domains:
             email_to_name[email] = name
-
+    print("DD", email_to_name)
     # Initialize Outlook
     try:
         outlook = win32com.client.Dispatch("Outlook.Application")
@@ -201,6 +207,6 @@ if __name__ == "__main__":
         print(f"Error reading HTML template file: {e}")
         exit(1)
 
-    generate_followup_emails(r"C:\Users\913678186\Box\ATI\PDF Accessibility\PDF Project Documents\57534520.xlsx",
-                             sql_file_path,
-                             template_html)
+    generate_followup_emails(r"C:\Users\913678186\Box\ATI\PDF Accessibility\PDF Project Documents\drupal_pdf_working_group.xlsx",
+                             # sql_file_path,
+                             # template_html)
