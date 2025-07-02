@@ -351,18 +351,30 @@ def verify_headings(document):
 
 def check_metadata(document):
 
+    # approved pdf accessibility tools get an auto pass if they created the pdf
+    approved_pdf_exporters = [
+        "Equidox 7",
+    ]
+
     meta = {
         "title": False,
         "language": False,
+        "approved_pdf_exporter": False
     }
 
     metadata = document.open_metadata()
+    print(metadata)
     if isinstance(document.Root.get("/Lang"), Object):
-        meta['language'] = True
+        meta["language"] = True
     if metadata.get("dc:title"):
-        meta['title'] = True
-    return meta
+        meta["title"] = True
 
+    producer = metadata.get("pdf:Producer")
+    print(producer)
+    if producer in approved_pdf_exporters:
+        meta["approved_pdf_exporter"] = True
+
+    return meta
 
 def get_doc_data(document):
 
@@ -438,6 +450,7 @@ def pdf_check(location):
             "metadata": check_metadata(Pikepdf),
             "doc_data": get_doc_data(Pikepdf),
             "file_hash": file_hash,
+
             # "headings_pass": verify_headings(Pikepdf),
             # "has_bookmarks": check_bookmarks(Pikepdf)
 
@@ -453,8 +466,6 @@ def pdf_check(location):
     except PdfError as e:
         print("PDF WRITE ERROR", e)
         return None
-
-
 
 
 

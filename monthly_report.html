@@ -325,6 +325,7 @@
                 <th>Page Count</th>
                 <th>Has Form</th>
                 <th>Pass/Fail</th>
+                <th>From Equidox</th>
             </tr>
             </thead>
             <tbody>
@@ -350,6 +351,7 @@
                 <td>{{ pdf.page_count }}</td>
                 <td>{{ "Yes" if pdf.has_form == 1 else "No" }}</td>
                 <td>{{"Failing" if pdf.high_priority == 1 else "Passing"}}</td>
+                <td>{{"Yes" if pdf.approved_pdf_exporter == 1 else "No"}}</td>
             </tr>
             {% endfor %}
             </tbody>

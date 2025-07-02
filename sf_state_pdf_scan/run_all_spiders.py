@@ -1,47 +1,55 @@
-import scrapy
+import os
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
-from scrapy import spiderloader
-from scrapy import signals
+from scrapy import spiderloader, signals
 from pydispatch import dispatcher
 
+COMPLETED_FILE = r'C:\Users\913678186\IdeaProjects\sf_state_pdf_website_scan\sf_state_pdf_scan\sf_state_pdf_scan\completed_spiders.txt'
+
+def load_completed():
+    if not os.path.exists(COMPLETED_FILE):
+        return set()
+    with open(COMPLETED_FILE) as f:
+        return {line.strip() for line in f if line.strip()}
+
+def mark_completed(spider_name):
+    # open/close on each call so it's flushed immediately
+    with open(COMPLETED_FILE, 'a') as f:
+        f.write(spider_name + '\n')
 
 if __name__ == '__main__':
-    # Get project settings
     settings = get_project_settings()
     process = CrawlerProcess(settings)
 
-    # Load all spiders from the configured spider folder
-    spider_loader = spiderloader.SpiderLoader.from_settings(settings)
-    all_spiders = list(reversed(spider_loader.list()))  # list of spider names in reverse order
+    loader = spiderloader.SpiderLoader.from_settings(settings)
+    all_spiders = list(reversed(loader.list()))
+    completed = load_completed()
+    to_run = [name for name in all_spiders if name not in completed]
 
-    # Turn the list into an iterator so we can get one spider at a time
-    spider_iter = iter(all_spiders)
+    if not to_run:
+        print("All spiders have already completed. Exiting.")
+        exit()
 
-    def run_next_spider():
-        """
-        Get the next spider name from spider_iter.
-        If there is none left, do nothing (Scrapy will eventually stop).
-        """
+    spider_iter = iter(to_run)
+
+    def run_next():
         try:
-            spider_name = next(spider_iter)
+            name = next(spider_iter)
         except StopIteration:
-            return  # No more spiders to run
-        print(f"Running spider: {spider_name}")
-        process.crawl(spider_name)  # Schedule the next spider to crawl
+            return
+        print(f"Starting spider: {name}")
+        process.crawl(name)
 
-    def spider_closed(spider):
-        """
-        This function is triggered by the spider_closed signal
-        each time a spider finishes.
-        """
-        run_next_spider()
+    def on_spider_closed(spider, reason):
+        if reason == 'finished':
+            # Immediately record the successful run
+            mark_completed(spider.name)
+            print(f"Recorded completion of spider: {spider.name}")
+        else:
+            print(f"Spider '{spider.name}' closed (reason: {reason})")
+        run_next()
 
-    # Connect the spider_closed signal to our handler
-    dispatcher.connect(spider_closed, signal=signals.spider_closed)
+    dispatcher.connect(on_spider_closed, signal=signals.spider_closed)
 
-    # Start running the first spider
-    run_next_spider()
-
-    # Begin the crawling process
+    run_next()
     process.start()

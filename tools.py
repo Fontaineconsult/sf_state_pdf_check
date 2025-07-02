@@ -4,6 +4,8 @@ import re
 import html
 import shutil
 import zipfile
+from datetime import datetime
+
 import requests
 from urllib.parse import unquote
 from openpyxl import load_workbook
@@ -176,6 +178,39 @@ def download_all_dprc_will_remediate_pdfs_by_site(site_name):
     shutil.rmtree(box_temp_folder)
     print("Temporary folder deleted.")
 
+
+def get_all_folders_by_date_modified(folder_path, date_modified):
+    """
+    Returns a list of all folder names (not full paths) in the specified directory that were modified after the given date.
+
+    Parameters:
+        folder_path (str): The path to the directory to search.
+        date_modified (str): The date (YYYY-MM-DD or MM/DD/YYYY) to compare against.
+
+    Returns:
+        list: A list of folder names that were modified after the specified date.
+    """
+    # Try parsing date in multiple formats
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y"):
+        try:
+            date_obj = datetime.strptime(date_modified, fmt)
+            break
+        except ValueError:
+            continue
+    else:
+        raise ValueError("date_modified must be in YYYY-MM-DD or MM/DD/YYYY format")
+
+    modified_folders = []
+    for root, dirs, _ in os.walk(folder_path):
+        for dir_name in dirs:
+            dir_path = os.path.join(root, dir_name)
+            if os.path.getmtime(dir_path) > date_obj.timestamp():
+                modified_folders.append(dir_name)
+    return modified_folders
+
+# print('\n'.join(get_all_folders_by_date_modified(
+#     r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans",
+#     "06/17/2025")))
 
 # download_all_dprc_will_remediate_pdfs_by_site('cob-sfsu-edu')
 

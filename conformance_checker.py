@@ -5,6 +5,7 @@ from urllib.parse import urlparse, urlunparse, quote
 import requests
 import subprocess
 
+from data_export import get_all_sites, get_pdfs_by_site_name
 from data_import import add_pdf_file_to_database, get_site_id_by_domain_name, check_if_pdf_report_exists, \
     add_pdf_report_failure
 from pdf_priority import violation_counter, pdf_check, pdf_status
@@ -93,7 +94,7 @@ def scan_pdfs(directory, domain_id):
                 # parsed_url = urlparse(file_url)
                 # encoded_path = quote(parsed_url.path)
                 # file_url = urlunparse(parsed_url._replace(path=encoded_path))
-                report_exsits = check_if_pdf_report_exists(file_url, loc)
+                report_exsits = check_if_pdf_report_exists(file_url, loc) # report will exist if there is a hash match
                 print("report exists", report_exsits)
             except ValueError as e:
                 add_pdf_report_failure("file_url", "loc", domain_id, "Couldn't unpack file url and location")
@@ -102,13 +103,13 @@ def scan_pdfs(directory, domain_id):
             if not report_exsits:
                 if box_share_pattern_match(file_url):
                     print("Downloading File From Box")
-                    box_download = download_from_box(file_url, loc, domain_id)
+                    box_download = download_from_box(file_url, loc, domain_id) # saved to temp_pdf_path
 
                     if not box_download[0]:
                         print("Box Download failed", file_url)
                         add_pdf_report_failure(file_url, loc, domain_id, box_download[1])
                 else:
-                    pdf_download = download_pdf_into_memory(file_url,loc, domain_id)
+                    pdf_download = download_pdf_into_memory(file_url,loc, domain_id) # saved to temp_pdf_path
                     if pdf_download:
 
                         with open(temp_pdf_path, "wb") as f:
@@ -116,10 +117,10 @@ def scan_pdfs(directory, domain_id):
                     else:
                         continue
 
-                report = create_verapdf_report(file_url)
+                report = create_verapdf_report(file_url) # default looks to temp_pdf_path
 
                 if report["report"]["status"] == "Succeeded":
-                    print("Add report to DB")
+
                     add_pdf_file_to_database(file_url, loc, domain_id, report["report"]["report"])
                 else:
                     add_pdf_report_failure(file_url, loc, domain_id, report["report"]["report"])
@@ -127,6 +128,45 @@ def scan_pdfs(directory, domain_id):
             else:
                 print("Report already exists", file_url)
                 continue
+
+
+def refresh_existing_pdf_reports():
+
+    all_sites_list = get_all_sites()
+    print(all_sites_list)
+
+    for domain in all_sites_list:
+
+        site_data = get_pdfs_by_site_name(domain)
+        if site_data:
+            for row in site_data:
+                print(row.pdf_uri)
+                if box_share_pattern_match(row.pdf_uri):
+                    print("Downloading File From Box")
+                    box_download = download_from_box(row.pdf_uri, 'None', "None")
+
+                    if not box_download[0]:
+                        print("Box Download failed", row.pdf_uri)
+                        add_pdf_report_failure(row.pdf_uri, row.parent_uri, row.drupal_site_id, box_download[1])
+
+                else:
+                    pdf_download = download_pdf_into_memory(row.pdf_uri, row.parent_uri, row.drupal_site_id)
+                    if pdf_download:
+                        with open(temp_pdf_path, "wb") as f:
+                            f.write(pdf_download)
+                    else:
+                        continue
+
+                report = create_verapdf_report(row.pdf_uri) # default looks to temp_pdf_path
+
+                if report["report"]["status"] == "Succeeded":
+                    print("Add report to DB")
+                    add_pdf_file_to_database(row.pdf_uri, row.parent_uri, row.drupal_site_id, report["report"]["report"], overwrite=True)
+                else:
+                    add_pdf_report_failure(row.pdf_uri, row.parent_uri, row.drupal_site_id, report["report"]["report"])
+
+
+
 
 
 def full_pdf_scan(site_folders):
@@ -170,4 +210,4 @@ def single_site_pdf_scan(site_folder):
         scan_pdfs(site_folder, domain_id)
 
 #
-# single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\veterans-sfsu-edu")
+# single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\faculty-sfsu-edu")

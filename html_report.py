@@ -85,6 +85,8 @@ def is_high_priority(data):
         return True
     if data['pdf_text_type'] == 'Image Only':
         return True
+    if data['approved_pdf_exporter']:
+        return False
     if int(data['page_count']) > 0 and round(int(data['failed_checks']) / int(data['page_count'])) > 20:
         return True
     if data['has_form'] == 1 and int(data['page_count']) > 0 and round(int(data['failed_checks']) / int(data['page_count'])) > 3:
@@ -112,15 +114,18 @@ def sanitize_pdf_data(pdf_report):
         "language_set": pdf_report.language_set or 0,
         "page_count": pdf_report.page_count or 0,
         "has_form": pdf_report.has_form or 0,
+        "approved_pdf_exporter": pdf_report.approved_pdf_exporter or 0,
         "file_hash": truncated_fingerprint,  # Display shortened hash
         "full_file_hash": full_fingerprint,  # Full hash for tooltip
         "high_priority": is_high_priority(pdf_report),  # Add priority flag
-        "errors_per_page": errors_per_page  # Precomputed errors/page value
+        "errors_per_page": errors_per_page # Precomputed errors/page value
+
     }
 
 def generate_site_details():
     """Generate site details including only PDF conformance data."""
     site_pdf_reports = fetch_pdf_reports()
+
     site_details = {}
 
     for site, pdf_reports in site_pdf_reports.items():
@@ -174,10 +179,14 @@ def main():
     """Main function to orchestrate fetching data, computing metrics, rendering, and saving."""
     all_sites = fetch_sites()
     site_details = generate_site_details()
+    print(len(site_details['ucorp.sfsu.edu']['pdf_reports']))
+    for item in site_details['ucorp.sfsu.edu']['pdf_reports']:
+        print(item)
+
     metrics = compute_metrics(site_details)
     stats = get_all_pdf_stats()  # Get overall PDF statistics from the SQL query
     site_pdf_counts = get_all_sites_with_pdfs()  # Get sites with their respective PDF counts
-    print(site_pdf_counts)
+
     # Context for the template, including our new 'stats' and 'site_pdf_counts' data.
     context = {
         "title": "Website Accessibility Report",
@@ -186,14 +195,14 @@ def main():
         "metrics": metrics,
         "stats": stats,
         "site_pdf_counts": site_pdf_counts,
-        "scan_month": "May 2025"
+        "scan_month": "June 2025"
     }
 
     # Render the template
     rendered_html = render_template("monthly_report.html", context)
 
     # Save the rendered HTML
-    save_html(rendered_html, 'Drupal-PDF-Accessibility-Report-May-2025.html')
+    save_html(rendered_html, 'Drupal-PDF-Accessibility-Report-June-2025.html')
 
 if __name__ == "__main__":
     main()

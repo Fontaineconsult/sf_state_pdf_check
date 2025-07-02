@@ -9,18 +9,18 @@ def check_for_node(parent_uri):
 
 
 def is_high_priority(data):
-
     """Determine if a PDF requires review based on accessibility flags."""
     if not isinstance(data, dict):
         data = dict(data._asdict())
-
 
     if data['tagged'] == 0:
         return True
     if data['pdf_text_type'] == 'Image Only':
         return True
-    if round(int(data['failed_checks']) / int(data['page_count'])) > 20:
+    if data['approved_pdf_exporter']:
+        return False
+    if int(data['page_count']) > 0 and round(int(data['failed_checks']) / int(data['page_count'])) > 20:
         return True
-    if data['has_form'] == 1 and round(int(data['failed_checks']) / int(data['page_count'])) > 3:
+    if data['has_form'] == 1 and int(data['page_count']) > 0 and round(int(data['failed_checks']) / int(data['page_count'])) > 3:
         return True
     return False

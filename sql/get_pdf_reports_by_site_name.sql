@@ -5,6 +5,7 @@ SELECT
     drupal_pdf_files.file_hash,
     drupal_site.domain_name,
     drupal_site.security_group_name,
+    drupal_pdf_files.drupal_site_id,
     pdf_report.violations,
     pdf_report.failed_checks,
     pdf_report.tagged,
@@ -13,7 +14,11 @@ SELECT
     pdf_report.language_set,
     pdf_report.page_count,
     pdf_report.has_form,
-    drupal_site.box_folder
+    pdf_report.approved_pdf_exporter,
+    drupal_site.box_folder,
+    drupal_pdf_files.parent_returns_404,
+    drupal_pdf_files.pdf_returns_404
+
 FROM
     drupal_pdf_files
         JOIN

@@ -187,86 +187,136 @@ def get_site_id_from_domain_name(domain_name):
     return site_id[0] if site_id else None
 
 
-def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict):
-    # Define the connection and cursor
+import sqlite3
+
+def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict, overwrite=False):
+    # connect
     conn = sqlite3.connect('drupal_pdfs.db')
     cursor = conn.cursor()
 
-    # Assuming violation_dict contains keys for violations, failed_checks, tagged, etc.
-    violations = violation_dict.get("violations", 0)
-    failed_checks = violation_dict.get("failed_checks", 0)
-    tagged = violation_dict.get("tagged", True)
-    check_for_image_only = violation_dict.get("check_for_image_only", False)
-    pdf_text_type = violation_dict.get("pdf_text_type", "")
-    title_set = violation_dict.get("metadata").get("title", None)
-    language_set = violation_dict.get("metadata").get("language", None)
-    page_count = violation_dict.get("doc_data").get("pages", 0)
-    file_hash = violation_dict.get("file_hash", "")
-    has_form = violation_dict.get("has_form", False)
+    # unpack violation_dict safely
+    violations            = violation_dict.get("violations", 0)
+    failed_checks         = violation_dict.get("failed_checks", 0)
+    tagged                = violation_dict.get("tagged", True)
+    check_for_image_only  = violation_dict.get("check_for_image_only", False)
+    pdf_text_type         = violation_dict.get("pdf_text_type", "")
+    metadata              = violation_dict.get("metadata", {}) or {}
+    title_set             = metadata.get("title")
+    language_set          = metadata.get("language")
+    approved_pdf_exporter = metadata.get("approved_pdf_exporter", False)
+    doc_data              = violation_dict.get("doc_data", {}) or {}
+    page_count            = doc_data.get("pages", 0)
+    file_hash             = violation_dict.get("file_hash", "")
+    has_form              = violation_dict.get("has_form", False)
 
+    # --- upsert pdf_report ---
+    cursor.execute(
+        "SELECT 1 FROM pdf_report WHERE pdf_hash = ?",
+        (file_hash,)
+    )
+    report_exists = cursor.fetchone() is not None
 
-    # check if pdf report exsits by file has
-    exists = cursor.execute("SELECT * FROM pdf_report WHERE pdf_hash = ?", (file_hash,)).fetchone()
-
-    if not exists:
-
-        cursor.execute("""
-        INSERT INTO pdf_report (
-            violations,
-            failed_checks,
-            tagged,
-            check_for_image_only,
-            pdf_text_type,
-            title_set,
-            language_set,
-            page_count,
-            pdf_hash,
-            has_form
-        ) VALUES (?,?,?,?,?,?,?,?,?,?)
-        """, (
-            violations,
-            failed_checks,
-            tagged,
-            check_for_image_only,
-            pdf_text_type,
-            title_set,
-            language_set,
-            page_count,
-            file_hash,
-            has_form
-        ))
-        conn.commit()
+    if report_exists:
+        if overwrite:
+            cursor.execute("""
+                           UPDATE pdf_report
+                           SET violations             = ?,
+                               failed_checks          = ?,
+                               tagged                 = ?,
+                               check_for_image_only   = ?,
+                               pdf_text_type          = ?,
+                               title_set              = ?,
+                               language_set           = ?,
+                               page_count             = ?,
+                               has_form               = ?,
+                               approved_pdf_exporter  = ?
+                           WHERE pdf_hash = ?
+                           """, (
+                               violations,
+                               failed_checks,
+                               tagged,
+                               check_for_image_only,
+                               pdf_text_type,
+                               title_set,
+                               language_set,
+                               page_count,
+                               has_form,
+                               approved_pdf_exporter,
+                               file_hash
+                           ))
+            conn.commit()
+        else:
+            print("PDF report already exists in the database.")
     else:
-        print("PDF report already exists in the database.")
-
-
-    # check if pdf exists by pdf_uri, parent_uri, and file_hash
-    exists = cursor.execute("SELECT * FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ? AND file_hash = ?",
-                   (pdf_uri, parent_uri, file_hash)).fetchone()
-
-
-    if exists:
-        print("PDF file already exists in the database.")
-
-    if not exists:
-
-        # Insert a new row into the drupal_pdf_files table
         cursor.execute("""
-        INSERT INTO drupal_pdf_files (
-            pdf_uri,
-            parent_uri,
-            drupal_site_id,
-            file_hash
-        ) VALUES (?, ?, ?, ?)
-        """, (
-            pdf_uri,
-            parent_uri,
-            drupal_site_id,
-            file_hash
-        ))
-
-        # Commit the changes and close the connection
+                       INSERT INTO pdf_report (
+                           violations,
+                           failed_checks,
+                           tagged,
+                           check_for_image_only,
+                           pdf_text_type,
+                           title_set,
+                           language_set,
+                           page_count,
+                           pdf_hash,
+                           has_form,
+                           approved_pdf_exporter
+                       ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                       """, (
+                           violations,
+                           failed_checks,
+                           tagged,
+                           check_for_image_only,
+                           pdf_text_type,
+                           title_set,
+                           language_set,
+                           page_count,
+                           file_hash,
+                           has_form,
+                           approved_pdf_exporter
+                       ))
         conn.commit()
+
+    # --- upsert drupal_pdf_files ---
+    cursor.execute(
+        "SELECT 1 FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ? AND file_hash = ?",
+        (pdf_uri, parent_uri, file_hash)
+    )
+    file_exists = cursor.fetchone() is not None
+
+    if file_exists:
+        if overwrite:
+            cursor.execute("""
+                           UPDATE drupal_pdf_files
+                           SET drupal_site_id = ?
+                           WHERE pdf_uri       = ?
+                             AND parent_uri    = ?
+                             AND file_hash     = ?
+                           """, (
+                               drupal_site_id,
+                               pdf_uri,
+                               parent_uri,
+                               file_hash
+                           ))
+            conn.commit()
+        else:
+            print("PDF file already exists in the database.")
+    else:
+        cursor.execute("""
+                       INSERT INTO drupal_pdf_files (
+                           pdf_uri,
+                           parent_uri,
+                           drupal_site_id,
+                           file_hash
+                       ) VALUES (?,?,?,?)
+                       """, (
+                           pdf_uri,
+                           parent_uri,
+                           drupal_site_id,
+                           file_hash
+                       ))
+        conn.commit()
+
     conn.close()
 
 
@@ -303,7 +353,8 @@ def check_if_pdf_report_exists(pdf_uri, parent_uri):
 
 
     if pdf_file:
-        # if a pdf exists, check if a report exists for the pdf
+        # if a pdf exists, check if a report exists for the pdf. We are looking for a hash match so
+        # if a file name stays the same but it is made accessible it will still not find a new report.
         pdf_hash = pdf_file[5]
         report = cursor.execute("SELECT * FROM pdf_report WHERE pdf_hash = ?", (pdf_hash,)).fetchone()
         if report:
