@@ -216,6 +216,7 @@ def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict
     )
     report_exists = cursor.fetchone() is not None
 
+    # if a report exists, update it, otherwise insert a new one
     if report_exists:
         if overwrite:
             cursor.execute("""
@@ -284,6 +285,9 @@ def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict
     )
     file_exists = cursor.fetchone() is not None
 
+
+
+
     if file_exists:
         if overwrite:
             cursor.execute("""
@@ -318,6 +322,22 @@ def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict
         conn.commit()
 
     conn.close()
+
+
+def compare_and_remove_updated_pdfs():
+    """
+    when the full pdf scan is run, duplicates are added if the file hash is different but the url + domain are the same.
+    We need to look at similar url + domain combinations and mark as removed all that are older than the current.
+
+    :return:
+    """
+
+    conn = sqlite3.connect('drupal_pdfs.db')
+    cursor = conn.cursor()
+
+
+
+
 
 
 
@@ -397,6 +417,25 @@ def truncate_reports_table():
     conn.close()
 
 
+def mark_pdf_as_removed(pdf_uri, parent_uri):
+    """
+    Marks a PDF as removed in the database by setting its status to 'removed'.
+    """
+    conn = sqlite3.connect('drupal_pdfs.db')
+    cursor = conn.cursor()
+
+    # Get the PDF file ID
+    pdf_file = cursor.execute("SELECT id FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ?", (pdf_uri, parent_uri)).fetchone()
+
+    if pdf_file:
+        pdf_file_id = pdf_file[0]
+        # Update the status of the PDF file to 'removed'
+        cursor.execute("UPDATE drupal_pdf_files SET removed = 1 WHERE id = ?", (pdf_file_id,))
+        conn.commit()
+    else:
+        print(f"No PDF found with URI: {pdf_uri} and Parent URI: {parent_uri}")
+
+    conn.close()
 
 
 

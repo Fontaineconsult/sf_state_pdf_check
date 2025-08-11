@@ -95,12 +95,12 @@ def scan_pdfs(directory, domain_id):
                 # encoded_path = quote(parsed_url.path)
                 # file_url = urlunparse(parsed_url._replace(path=encoded_path))
                 report_exsits = check_if_pdf_report_exists(file_url, loc) # report will exist if there is a hash match
-                print("report exists", report_exsits)
             except ValueError as e:
                 add_pdf_report_failure("file_url", "loc", domain_id, "Couldn't unpack file url and location")
                 continue
 
             if not report_exsits:
+                print("Report does not exist", file_url, loc)
                 if box_share_pattern_match(file_url):
                     print("Downloading File From Box")
                     box_download = download_from_box(file_url, loc, domain_id) # saved to temp_pdf_path
@@ -129,13 +129,13 @@ def scan_pdfs(directory, domain_id):
                 print("Report already exists", file_url)
                 continue
 
+def refresh_existing_pdf_reports(single_domain=None):
 
-def refresh_existing_pdf_reports():
+    # this will redownload all PDFs and regenerate reports
 
-    all_sites_list = get_all_sites()
-    print(all_sites_list)
+    def scan_pdfs_by_domain(domain):
 
-    for domain in all_sites_list:
+
 
         site_data = get_pdfs_by_site_name(domain)
         if site_data:
@@ -164,6 +164,18 @@ def refresh_existing_pdf_reports():
                     add_pdf_file_to_database(row.pdf_uri, row.parent_uri, row.drupal_site_id, report["report"]["report"], overwrite=True)
                 else:
                     add_pdf_report_failure(row.pdf_uri, row.parent_uri, row.drupal_site_id, report["report"]["report"])
+
+
+    if not single_domain:
+        # refresh all sites
+        all_sites_list = get_all_sites()
+        print(all_sites_list)
+        for domain in all_sites_list:
+            scan_pdfs_by_domain(domain)
+
+    if single_domain:
+        #refresh single domain
+        scan_pdfs_by_domain(single_domain)
 
 
 
@@ -210,4 +222,6 @@ def single_site_pdf_scan(site_folder):
         scan_pdfs(site_folder, domain_id)
 
 #
-# single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\faculty-sfsu-edu")
+if __name__=='__main__':
+
+    refresh_existing_pdf_reports("socwork.sfsu.edu")

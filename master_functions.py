@@ -5,6 +5,8 @@ from conformance_checker import full_pdf_scan
 from data_export import get_pdfs_by_site_name, get_all_sites, write_data_to_excel, get_site_failures
 from database import create_pdf_report
 from filters import check_for_node, is_high_priority
+from scan_refresh import refresh_status
+from tools import mark_pdfs_as_removed
 
 pdf_sites_folder = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans"
 scans_output = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans\\{}"
@@ -105,8 +107,18 @@ def create_all_pdf_reports():
     None
     """
 
-    full_pdf_scan(pdf_sites_folder)
+    print("Starting full PDF scan...")
 
-# create_all_pdf_reports()
-# build_all_xcel_reports()
+    ##
+    ## Make sure to back up the database before running this function
+    ##
+    # Import pdfs and test for accessibility
+    full_pdf_scan(pdf_sites_folder)
+    # remove 404s and set as 404
+    refresh_status()
+    # compare the pdfs in the folder to the database and mark as removed if not in the folder
+    mark_pdfs_as_removed(pdf_sites_folder)
+
+create_all_pdf_reports()
+build_all_xcel_reports()
 # build_single_xcel_report("hr.sfsu.edu")

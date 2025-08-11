@@ -9,7 +9,15 @@ from datetime import datetime
 import requests
 from urllib.parse import unquote
 from openpyxl import load_workbook
+
+from conformance_checker import loop_through_files_in_folder
+from data_export import get_pdfs_by_site_name
+from data_import import get_site_id_by_domain_name, mark_pdf_as_removed
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import download_from_box, box_share_pattern_match
+
+
+pdf_sites_folder = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans"
+scans_output = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans\\{}"
 
 
 def delete_scans_files(root_folder):
@@ -208,6 +216,10 @@ def get_all_folders_by_date_modified(folder_path, date_modified):
                 modified_folders.append(dir_name)
     return modified_folders
 
+
+
+
+
 # print('\n'.join(get_all_folders_by_date_modified(
 #     r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans",
 #     "06/17/2025")))
@@ -215,6 +227,45 @@ def get_all_folders_by_date_modified(folder_path, date_modified):
 # download_all_dprc_will_remediate_pdfs_by_site('cob-sfsu-edu')
 
 
+def mark_pdfs_as_removed(site_folders):
+    """
+    Compare the raw pdf scrape URLS and Parent with current PDFS and mark current PDFS as removed if they are not in the raw scrape.
+    :return:
+    """
+    raw_pdf_scan_set = set()
 
-# Example usage:
-# delete_duplicate_entries()
+    for folder in os.listdir(site_folders):
+
+        domain_id = get_site_id_by_domain_name(folder)
+
+        site_pdfs = get_pdfs_by_site_name(folder.replace("-","."))
+
+        existing_pdfs_set = set((pdf.pdf_uri, pdf.parent_uri) for pdf in site_pdfs)
+
+        if domain_id is not None:
+            pdf_locations = loop_through_files_in_folder(os.path.join(site_folders, folder))
+
+            if pdf_locations:
+
+                for file in pdf_locations:
+
+                    file_split = file.split(' ', 1)  # Splits at the last space
+
+                    file_url = file_split[0]
+                    loc = file_split[1].split(" ")[0]
+                    raw_pdf_scan_set.add((file_url, loc))
+
+        missing_pdfs = existing_pdfs_set.difference(raw_pdf_scan_set)
+        if missing_pdfs:
+            for pdf_uri, parent_uri in missing_pdfs:
+
+                mark_pdf_as_removed(pdf_uri, parent_uri)
+
+
+        raw_pdf_scan_set.clear()
+        existing_pdfs_set.clear()
+
+
+if __name__ == "__main__":
+    mark_pdfs_as_removed(pdf_sites_folder)
+

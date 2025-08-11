@@ -15,7 +15,7 @@ def get_all_pdf_stats():
       - total_high_priority
     """
     # Open and read the SQL query from file.
-    with open("sql/all_pdf_stats.sql", "r") as file:
+    with open("sql/sum_all_pdf_stats.sql", "r") as file:
         query = file.read()
 
     # Connect to the SQLite database.
@@ -34,6 +34,7 @@ def get_all_pdf_stats():
     # Create a dictionary mapping column names to their corresponding values.
     stats = dict(zip(col_names, row))
 
+    print("SSSS", stats)
     # Close the database connection.
     conn.close()
 
@@ -143,10 +144,12 @@ def compute_metrics(site_details):
     site_failures = {}
 
     for site, details in site_details.items():
+        print(site)
 
         pdfs = details["pdf_reports"]
 
         total_pdfs += len(pdfs)
+        print(total_pdfs)
         failing_count = 0
         for pdf in pdfs:
             # Count a PDF as failing if errors_per_page is an integer and > 0.
@@ -158,11 +161,15 @@ def compute_metrics(site_details):
     # Sort sites by the number of failing PDFs and take the top 20.
     top_20_sites = sorted(site_failures.items(), key=lambda x: x[1], reverse=True)[:20]
 
+
+
     return {
         "total_pdfs": total_pdfs,
         "total_failing": total_failing,
         "top_20_sites": top_20_sites
     }
+
+
 
 def render_template(template_name, context):
     """Load and render the Jinja2 template with the provided context."""
@@ -179,15 +186,16 @@ def main():
     """Main function to orchestrate fetching data, computing metrics, rendering, and saving."""
     all_sites = fetch_sites()
     site_details = generate_site_details()
-    print(len(site_details['ucorp.sfsu.edu']['pdf_reports']))
-    for item in site_details['ucorp.sfsu.edu']['pdf_reports']:
-        print(item)
+
 
     metrics = compute_metrics(site_details)
     stats = get_all_pdf_stats()  # Get overall PDF statistics from the SQL query
     site_pdf_counts = get_all_sites_with_pdfs()  # Get sites with their respective PDF counts
 
     # Context for the template, including our new 'stats' and 'site_pdf_counts' data.
+
+    print(metrics)
+    print(stats)
     context = {
         "title": "Website Accessibility Report",
         "sites": all_sites,
@@ -195,14 +203,14 @@ def main():
         "metrics": metrics,
         "stats": stats,
         "site_pdf_counts": site_pdf_counts,
-        "scan_month": "June 2025"
+        "scan_month": "July 2025"
     }
 
     # Render the template
     rendered_html = render_template("monthly_report.html", context)
 
     # Save the rendered HTML
-    save_html(rendered_html, 'Drupal-PDF-Accessibility-Report-June-2025.html')
+    save_html(rendered_html, 'Drupal-PDF-Accessibility-Report-July-2025.html')
 
 if __name__ == "__main__":
     main()

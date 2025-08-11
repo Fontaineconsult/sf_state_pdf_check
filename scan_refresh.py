@@ -130,5 +130,6 @@ def refresh_status(box_only=False):
     conn.close()
     print("Database connection closed.")
 
-# Example usage:
-refresh_status()
+
+if __name__== "__main__":
+    refresh_status()

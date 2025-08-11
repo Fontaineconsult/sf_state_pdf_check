@@ -5,4 +5,5 @@ WHERE drupal_pdf_files.parent_uri NOT LIKE '%/node/%'
   AND drupal_pdf_files.parent_uri NOT LIKE '%/index.php/%'
   AND drupal_pdf_files.pdf_returns_404 = 0
   AND drupal_pdf_files.parent_returns_404 = 0
+  AND removed is FALSE
 GROUP BY domain_name;

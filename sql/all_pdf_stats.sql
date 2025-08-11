@@ -1,4 +1,5 @@
 SELECT
+    drupal_site.domain_name,
     COUNT(*) AS total_pdf_instances,
     COUNT(DISTINCT drupal_pdf_files.file_hash) AS total_unique_pdfs,
     SUM(
@@ -16,4 +17,6 @@ FROM drupal_pdf_files
 WHERE drupal_pdf_files.parent_uri NOT LIKE '%/node/%'
   AND drupal_pdf_files.parent_uri NOT LIKE '%/index.php/%'
   AND drupal_pdf_files.pdf_returns_404 = 0
-  AND drupal_pdf_files.parent_returns_404 = 0;
+  AND removed is FALSE
+  AND drupal_pdf_files.parent_returns_404 = 0
+GROUP BY drupal_site.domain_name;

@@ -29,4 +29,5 @@ FROM
 WHERE parent_uri NOT LIKE '%/node/%' AND parent_uri NOT LIKE '%/index.php/%'
   AND parent_returns_404 is FALSE
   AND pdf_returns_404 is FALSE
+  AND removed is FALSE
   AND drupal_site.domain_name = '{site_name}';
