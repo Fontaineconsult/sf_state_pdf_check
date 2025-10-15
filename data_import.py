@@ -338,9 +338,6 @@ def compare_and_remove_updated_pdfs():
 
 
 
-
-
-
 def get_all_sites_domain_names():
     conn = sqlite3.connect('drupal_pdfs.db')
     cursor = conn.cursor()

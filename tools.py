@@ -11,7 +11,7 @@ from urllib.parse import unquote
 from openpyxl import load_workbook
 
 from conformance_checker import loop_through_files_in_folder
-from data_export import get_pdfs_by_site_name
+from data_export import get_pdf_reports_by_site_name
 from data_import import get_site_id_by_domain_name, mark_pdf_as_removed
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import download_from_box, box_share_pattern_match
 
@@ -238,7 +238,7 @@ def mark_pdfs_as_removed(site_folders):
 
         domain_id = get_site_id_by_domain_name(folder)
 
-        site_pdfs = get_pdfs_by_site_name(folder.replace("-","."))
+        site_pdfs = get_pdf_reports_by_site_name(folder.replace("-", "."))
 
         existing_pdfs_set = set((pdf.pdf_uri, pdf.parent_uri) for pdf in site_pdfs)
 

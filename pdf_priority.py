@@ -78,7 +78,7 @@ def violation_counter(json_file):
             clause_id = rule.get("clause")
             test_number = rule.get("testNumber")
 
-            if str(clause_id) in immediate_failures:
+            if str(clause_id) in immediate_failures: ## hard coded
                 if test_number == "11":  # not tagged
                     violations["tagged"] = False
                 if test_number == "3":  # possibly image only

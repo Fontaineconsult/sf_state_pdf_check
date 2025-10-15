@@ -1,6 +1,7 @@
 import sqlite3
 import requests
 
+from data_export import get_pdfs_by_site_name
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import box_share_pattern_match, download_from_box
 
 def check_box_pdf_status(pdf_uri):
@@ -45,7 +46,7 @@ def check_box_pdf_status(pdf_uri):
         # If the status is not a redirect, check if it is 200.
         return response.status_code == 200, response.status_code
 
-def refresh_status(box_only=False):
+def refresh_status(box_only=False, site=None):
     """
     Loop through all PDFs and their parent URIs, making HTTP HEAD requests to check their status.
     If box_only is True, only PDF URIs that are Box share links are checked and no other URLs are processed.
@@ -59,6 +60,11 @@ def refresh_status(box_only=False):
     conn = sqlite3.connect('drupal_pdfs.db')
     cursor = conn.cursor()
     pdfs = cursor.execute("SELECT * FROM drupal_pdf_files").fetchall()
+
+    if site:
+        pdfs = get_pdfs_by_site_name(site)
+
+
 
     total_records = len(pdfs)
     print(f"Total records found: {total_records}")

@@ -238,7 +238,7 @@
             <ul>
                 <li><a href="https://webaim.org/techniques/acrobat/" target="_blank">WebAIM’s Techniques for Acrobat</a> – step-by-step guidance on tagging, reading order, and more.</li>
                 <li><a href="https://experienceleague.adobe.com/en/docs/document-cloud-learn/acrobat-learning/advanced-tasks/accessibility-series/accessibility-series" target="_blank">Adobe Acrobat Accessibility Series</a> – Adobe’s official tutorials on advanced accessibility tasks in Acrobat Pro.</li>
-                <li><a href="https://equidox.co/pdf-solutions/pdf-accessibility-software/videos/" target="_blank">Equidox Videos</a> – Learn how to use Equidox</li>
+                <li><a href="https://www.youtube.com/playlist?list=PLAmymXVEJA7CsShLubTC3iaPDxpmDzF28" target="_blank">Equidox Videos</a> – Learn how to use Equidox</li>
             </ul>
         </div>
         <p><b>IMPORTANT NOTE: Acrobat's PDF accessibility checker does not report WCAG 2.1 level violations. Do not rely on it. Use Equidox.</b></p>
@@ -308,7 +308,7 @@
         {% endif %}
         {% if details.pdf_reports %}
         <h3>PDF Accessibility Report for {{ site }}</h3>
-        <p><span class="status-fail">Red = Failing</span> | <span class="status-pass">Green = Passing</span>| Click Column Headers to Sort</p>
+        <p><span class="status-fail">Red = Failing (Fix with Equidox)</span> | <span class="status-pass">Green = Passing (Don't do anything)</span>| Click Column Headers to Sort</p>
         <table class="pdf-table sortable" data-sortable>
             <caption>PDF Accessibility Report for {{ site }}</caption>
             <thead>

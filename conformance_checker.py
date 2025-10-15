@@ -1,11 +1,13 @@
 import os
+import sqlite3
+
 import time
 from urllib.parse import urlparse, urlunparse, quote
 
 import requests
 import subprocess
 
-from data_export import get_all_sites, get_pdfs_by_site_name
+from data_export import get_all_sites, get_pdf_reports_by_site_name
 from data_import import add_pdf_file_to_database, get_site_id_by_domain_name, check_if_pdf_report_exists, \
     add_pdf_report_failure
 from pdf_priority import violation_counter, pdf_check, pdf_status
@@ -129,6 +131,19 @@ def scan_pdfs(directory, domain_id):
                 print("Report already exists", file_url)
                 continue
 
+
+def mark_replaced_pdfs_as_removed(domain_id):
+
+    with open("sql/update_scan_by_removing_old_duplicates.sql", "r") as file:
+        query = file.read()
+
+    formatted_query = query.format(site_name=domain_id)
+    print(formatted_query)
+    conn = sqlite3.connect('drupal_pdfs.db')
+    cursor = conn.cursor()
+    cursor.execute(formatted_query)
+
+
 def refresh_existing_pdf_reports(single_domain=None):
 
     # this will redownload all PDFs and regenerate reports
@@ -137,7 +152,7 @@ def refresh_existing_pdf_reports(single_domain=None):
 
 
 
-        site_data = get_pdfs_by_site_name(domain)
+        site_data = get_pdf_reports_by_site_name(domain)
         if site_data:
             for row in site_data:
                 print(row.pdf_uri)
@@ -166,16 +181,20 @@ def refresh_existing_pdf_reports(single_domain=None):
                     add_pdf_report_failure(row.pdf_uri, row.parent_uri, row.drupal_site_id, report["report"]["report"])
 
 
+
+
     if not single_domain:
         # refresh all sites
         all_sites_list = get_all_sites()
         print(all_sites_list)
         for domain in all_sites_list:
             scan_pdfs_by_domain(domain)
+            mark_replaced_pdfs_as_removed(domain)
 
     if single_domain:
         #refresh single domain
         scan_pdfs_by_domain(single_domain)
+        mark_replaced_pdfs_as_removed(single_domain)
 
 
 
@@ -224,4 +243,4 @@ def single_site_pdf_scan(site_folder):
 #
 if __name__=='__main__':
 
-    refresh_existing_pdf_reports("socwork.sfsu.edu")
+    mark_replaced_pdfs_as_removed("socwork.sfsu.edu")

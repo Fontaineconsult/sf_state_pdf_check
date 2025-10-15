@@ -1,6 +1,6 @@
 import math
 from jinja2 import Environment, FileSystemLoader
-from data_export import get_all_sites, get_pdfs_by_site_name
+from data_export import get_all_sites, get_pdf_reports_by_site_name
 import sqlite3
 
 # Setup Jinja2 Environment (Global)
@@ -73,7 +73,7 @@ def fetch_pdf_reports():
 
     all_sites = fetch_sites()
     for site in all_sites:
-        site_pdf_reports[site] = get_pdfs_by_site_name(site)
+        site_pdf_reports[site] = get_pdf_reports_by_site_name(site)
 
     return site_pdf_reports
 
@@ -203,14 +203,14 @@ def main():
         "metrics": metrics,
         "stats": stats,
         "site_pdf_counts": site_pdf_counts,
-        "scan_month": "July 2025"
+        "scan_month": "September 2025"
     }
 
     # Render the template
     rendered_html = render_template("monthly_report.html", context)
 
     # Save the rendered HTML
-    save_html(rendered_html, 'Drupal-PDF-Accessibility-Report-July-2025.html')
+    save_html(rendered_html, 'Drupal-PDF-Accessibility-Report-September-2025.html')
 
 if __name__ == "__main__":
     main()

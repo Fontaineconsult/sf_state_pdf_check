@@ -1,8 +1,8 @@
 import os
 from datetime import datetime
 
-from conformance_checker import full_pdf_scan
-from data_export import get_pdfs_by_site_name, get_all_sites, write_data_to_excel, get_site_failures
+from conformance_checker import full_pdf_scan, refresh_existing_pdf_reports, single_site_pdf_scan
+from data_export import get_pdf_reports_by_site_name, get_all_sites, write_data_to_excel, get_site_failures
 from database import create_pdf_report
 from filters import check_for_node, is_high_priority
 from scan_refresh import refresh_status
@@ -18,7 +18,7 @@ def build_all_xcel_reports():
 
     for site in all_sites:
         site_folder_name = site.replace(".", "-")
-        site_data = get_pdfs_by_site_name(site)
+        site_data = get_pdf_reports_by_site_name(site)
         fail_data = get_site_failures(site)
 
         # check if scans folder exists and if not create it
@@ -31,7 +31,7 @@ def build_all_xcel_reports():
 def build_single_xcel_report(site_name):
 
         site_folder_name = site_name.replace(".", "-")
-        site_data = get_pdfs_by_site_name(site_name)
+        site_data = get_pdf_reports_by_site_name(site_name)
         print(site_data)
         fail_data = get_site_failures(site_name)
 
@@ -59,7 +59,7 @@ def count_reportable_pdfs():
 
     for site in all_sites:
         site_folder_name = site.replace(".", "-")
-        site_data = get_pdfs_by_site_name(site)
+        site_data = get_pdf_reports_by_site_name(site)
         fail_data = get_site_failures(site)
 
         for item in site_data:
@@ -75,13 +75,26 @@ def count_high_priority_pdfs():
     all_sites = get_all_sites()
     for site in all_sites:
         site_folder_name = site.replace(".", "-")
-        site_data = get_pdfs_by_site_name(site)
+        site_data = get_pdf_reports_by_site_name(site)
         fail_data = get_site_failures(site)
         for item in site_data:
 
             if not is_high_priority(item):
                 is_high_priority_count += 1
     return is_high_priority_count
+
+# def backup_database():
+#
+#     # copies drupal_pdfs.db from this folder to /database-backups and appends '-backup--YYYY-MM-DD' to the filename
+#
+#     import shutil
+#     from datetime import datetime
+#     db_backup_folder = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans\\database-backups"
+#     if not os.path.exists(db_backup_folder):
+#         os.makedirs(db_backup_folder)
+#     db_file = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans\\drupal_pdfs.db"
+#     if os.path.exists(db_file):
+#
 
 
 def create_all_pdf_reports():
@@ -118,7 +131,20 @@ def create_all_pdf_reports():
     refresh_status()
     # compare the pdfs in the folder to the database and mark as removed if not in the folder
     mark_pdfs_as_removed(pdf_sites_folder)
+    # refresh_existing_pdf_reports
+    refresh_existing_pdf_reports()
 
-create_all_pdf_reports()
-build_all_xcel_reports()
-# build_single_xcel_report("hr.sfsu.edu")
+
+def single_site_full_refresh():
+    single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\creativewriting-sfsu-edu")
+    refresh_status(site="creativewriting.sfsu.edu")
+    mark_pdfs_as_removed(pdf_sites_folder)
+    refresh_existing_pdf_reports(single_domain="creativewriting.sfsu.edu")
+
+if __name__=="__main__":
+    create_all_pdf_reports()
+
+
+# create_all_pdf_reports()
+# build_all_xcel_reports()
+# build_single_xcel_report("creativewriting.sfsu.edu")

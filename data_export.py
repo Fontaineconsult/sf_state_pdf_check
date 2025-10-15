@@ -26,7 +26,7 @@ def get_all_sites():
 
 
 
-def get_pdfs_by_site_name(site_name):
+def get_pdf_reports_by_site_name(site_name):
 
     with open("sql/get_pdf_reports_by_site_name.sql", 'r') as file:
         sql_query = file.read()
@@ -55,6 +55,22 @@ def get_pdfs_by_site_name(site_name):
         conn.close()
 
         return results
+
+
+def get_pdfs_by_site_name(site_name):
+
+    with open("sql/get_pdfs_by_domain_name.sql", 'r') as file:
+        sql_query = file.read()
+        formatted_query = sql_query.format(site_name=site_name)
+        conn = sqlite3.connect("drupal_pdfs.db")
+        cursor = conn.cursor()
+        cursor.execute(formatted_query)
+        results = cursor.fetchall()
+        return results
+
+
+#
+# print(get_pdfs_by_site_name('creativewriting.sfsu.edu'))
 
 
 
