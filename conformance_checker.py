@@ -17,13 +17,29 @@ from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import box_share_pattern_ma
 temp_pdf_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp.pdf"
 temp_profile_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp_profile.json"
 
-def download_pdf_into_memory(url, loc, domain_id):
-
-    request = requests.get(url)
-    if request.ok:
-        return request.content
-    else:
-        add_pdf_report_failure(url, loc, domain_id, f"Couldn't download {request.status_code}")
+def download_pdf_into_memory(url, loc, domain_id, timeout=30, allow_insecure_retry=True):
+    import urllib3
+    try:
+        resp = requests.get(url, timeout=timeout)
+        resp.raise_for_status()
+        return resp.content
+    except requests.exceptions.SSLError as e:
+        if not allow_insecure_retry:
+            add_pdf_report_failure(url, loc, domain_id, f"SSL error: {e}")
+            return False
+        # Retry without certificate verification
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        try:
+            resp = requests.get(url, timeout=timeout, verify=False)
+            resp.raise_for_status()
+            return resp.content
+        except requests.exceptions.RequestException as e2:
+            status = f"{getattr(e2, 'response', None).status_code} " if getattr(e2, 'response', None) is not None else ""
+            add_pdf_report_failure(url, loc, domain_id, f"Couldn't download (insecure retry) {status}{e2}")
+            return False
+    except requests.exceptions.RequestException as e:
+        status = f"{getattr(e, 'response', None).status_code} " if getattr(e, 'response', None) is not None else ""
+        add_pdf_report_failure(url, loc, domain_id, f"Couldn't download {status}{e}")
         return False
 
 

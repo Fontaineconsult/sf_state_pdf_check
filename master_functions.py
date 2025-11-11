@@ -136,13 +136,13 @@ def create_all_pdf_reports():
 
 
 def single_site_full_refresh():
-    single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\creativewriting-sfsu-edu")
-    refresh_status(site="creativewriting.sfsu.edu")
+    single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\access-sfsu-edu")
+    refresh_status(site="access.sfsu.edu")
     mark_pdfs_as_removed(pdf_sites_folder)
-    refresh_existing_pdf_reports(single_domain="creativewriting.sfsu.edu")
+    refresh_existing_pdf_reports(single_domain="access.sfsu.edu")
 
 if __name__=="__main__":
-    create_all_pdf_reports()
+    single_site_full_refresh()
 
 
 # create_all_pdf_reports()

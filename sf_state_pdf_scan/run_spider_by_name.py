@@ -8,7 +8,7 @@ if __name__ == '__main__':
     process = CrawlerProcess(settings)
 
     # Provide the spider name you want to run
-    spider_name = 'information_technology_services2_spider'  # Replace with your actual spider name
+    spider_name = 'disability_programs_and_resource_center_spider'  # Replace with your actual spider name
 
     # Schedule the spider to crawl
     process.crawl(spider_name)

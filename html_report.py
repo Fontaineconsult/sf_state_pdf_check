@@ -203,14 +203,14 @@ def main():
         "metrics": metrics,
         "stats": stats,
         "site_pdf_counts": site_pdf_counts,
-        "scan_month": "September 2025"
+        "scan_month": "October 2025"
     }
 
     # Render the template
     rendered_html = render_template("monthly_report.html", context)
 
     # Save the rendered HTML
-    save_html(rendered_html, 'Drupal-PDF-Accessibility-Report-September-2025.html')
+    save_html(rendered_html, 'Drupal-PDF-Accessibility-Report-October-2025.html')
 
 if __name__ == "__main__":
     main()

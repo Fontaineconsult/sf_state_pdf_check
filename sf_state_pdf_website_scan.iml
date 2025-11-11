@@ -7,7 +7,7 @@
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/windowsvenvpy" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.12 (sf_state_pdf_website_scan)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.12 virtualenv at C:\Users\913678186\IdeaProjects\sf_state_pdf_website_scan\windowsvenvpy" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
