@@ -141,6 +141,10 @@
             background-color: #ffe0e0;
             font-weight: bold;
         }
+        .status-archived {
+            background-color: #ffe4b5;  /* Light orange color */
+            font-weight: bold;
+        }
         /* Truncate long PDF names with ellipsis, showing the end of the text */
         .truncate {
             max-width: 220px;
@@ -268,7 +272,7 @@
             <ul class="stats-list">
                 <li><strong>Total PDF Instances*:</strong> {{ stats.total_pdf_instances }}</li>
                 <li><strong>Total Unique PDFs:</strong> {{ stats.total_unique_pdfs }}</li>
-                <li><strong>Total Failing PDFs:</strong> {{ stats.total_high_priority }}</li>
+                <li><strong>PDFs that need to be made Accessible:</strong> {{ stats.total_high_priority }}</li>
             </ul>
         </div>
         <h3>Top 20 Sites with Failures</h3>
@@ -308,7 +312,7 @@
         {% endif %}
         {% if details.pdf_reports %}
         <h3>PDF Accessibility Report for {{ site }}</h3>
-        <p><span class="status-fail">Red = Failing (Fix with Equidox)</span> | <span class="status-pass">Green = Passing (Don't do anything)</span>| Click Column Headers to Sort</p>
+        <p><span class="status-fail">Red = Failing (Fix with Equidox)</span> | <span class="status-pass">Green = Passing (Don't do anything)</span> | <span class="status-archived">Orange = Archived</span> | Click Column Headers to Sort</p>
         <table class="pdf-table sortable" data-sortable>
             <caption>PDF Accessibility Report for {{ site }}</caption>
             <thead>
@@ -325,12 +329,13 @@
                 <th>Page Count</th>
                 <th>Has Form</th>
                 <th>Pass/Fail</th>
+                <th>Archived</th>
 <!--                <th>From Equidox</th>-->
             </tr>
             </thead>
             <tbody>
             {% for pdf in details.pdf_reports %}
-            <tr class="{% if pdf.high_priority %}status-fail{% else %}status-pass{% endif %}">
+            <tr class="{% if pdf.pdf_is_archived == 1 %}status-archived{% elif pdf.high_priority %}status-fail{% else %}status-pass{% endif %}">
                 <td>{{ loop.index }}</td>
                 <td class="truncate">
                     {% if pdf.pdf_uri %}
@@ -351,6 +356,7 @@
                 <td>{{ pdf.page_count }}</td>
                 <td>{{ "Yes" if pdf.has_form == 1 else "No" }}</td>
                 <td>{{"Not Accessible" if pdf.high_priority == 1 else "Accessible"}}</td>
+                <td>{{ "Yes" if pdf.pdf_is_archived == 1 else "No" }}</td>
 <!--                <td>{{"Yes" if pdf.approved_pdf_exporter == 1 else "No"}}</td>-->
             </tr>
             {% endfor %}

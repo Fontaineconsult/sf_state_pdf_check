@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS drupal_pdf_files (
     file_hash TEXT,
     pdf_returns_404 Boolean DEFAULT FALSE,
     parent_returns_404 Boolean DEFAULT FALSE,
+    pdf_is_archived BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (drupal_site_id) REFERENCES drupal_site(id)
 );
 """

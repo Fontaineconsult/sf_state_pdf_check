@@ -4,6 +4,7 @@
     <file url="file://$PROJECT_DIR$/sql/all_pdf_stats.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/duplicate_counter.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/get_admin_contacts.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/sql/get_all_pdfs.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/get_all_sites_with_pdfs.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/get_all_users_with_pdf_files.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/get_failures_by_site_id.sql" dialect="SQLite" />

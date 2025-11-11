@@ -119,7 +119,8 @@ def sanitize_pdf_data(pdf_report):
         "file_hash": truncated_fingerprint,  # Display shortened hash
         "full_file_hash": full_fingerprint,  # Full hash for tooltip
         "high_priority": is_high_priority(pdf_report),  # Add priority flag
-        "errors_per_page": errors_per_page # Precomputed errors/page value
+        "errors_per_page": errors_per_page, # Precomputed errors/page value
+        "pdf_is_archived": pdf_report.pdf_is_archived or 0  # Add archived flag
 
     }
 
@@ -152,8 +153,8 @@ def compute_metrics(site_details):
         print(total_pdfs)
         failing_count = 0
         for pdf in pdfs:
-            # Count a PDF as failing if errors_per_page is an integer and > 0.
-            if is_high_priority(pdf):
+            # Count a PDF as failing if high priority and not archived
+            if is_high_priority(pdf) and pdf.get('pdf_is_archived', 0) != 1:
                 failing_count += 1
         total_failing += failing_count
         site_failures[site] = failing_count
