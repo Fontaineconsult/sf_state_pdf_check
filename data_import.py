@@ -448,7 +448,7 @@ def import_box_folders():
     WHERE domain_name = ?;
     '''
 
-    with open(r"box_folders.csv", "r", encoding='utf-8') as f:
+    with open(r"misc/box_folders.csv", "r", encoding='utf-8') as f:
         csvreader = csv.reader(f)
         next(csvreader, None)
 
