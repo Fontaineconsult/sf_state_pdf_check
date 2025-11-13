@@ -4,6 +4,7 @@
     <file url="file://$PROJECT_DIR$/sql/all_pdf_stats.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/duplicate_counter.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/get_admin_contacts.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/sql/get_all_parent_sites.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/get_all_pdfs.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/get_all_sites_with_pdfs.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/get_all_users_with_pdf_files.sql" dialect="SQLite" />
@@ -12,5 +13,6 @@
     <file url="file://$PROJECT_DIR$/sql/site_ranks.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/sum_all_pdf_stats.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/sql/update_scan_by_removing_old_duplicates.sql" dialect="SQLite" />
+    <file url="PROJECT" dialect="SQLite" />
   </component>
 </project>
