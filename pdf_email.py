@@ -3,6 +3,7 @@ import pythoncom
 import time
 
 from communications import build_emails
+from set_env import settings, get_project_path
 
 emails = build_emails()
 
@@ -34,11 +35,11 @@ def generate_email(html_content, reciever):
     mail_item.Subject = "Drupal PDF Accessibility Conformance Project"
     mail_item.BodyFormat = 2  # 2: olFormatHTML
     mail_item.HTMLBody = html_content
-    mail_item.To = "fontaine@sfsu.edu"
+    mail_item.To = settings.get('email.default_recipient')
     print("Email properties set.")
 
     # Save the email as an MSG file
-    save_path = r"C:\Users\913678186\IdeaProjects\sf_state_pdf_website_scan\emails\email.msg"  # Ensure the path includes the filename and extension
+    save_path = get_project_path('email_msg')
     # mail.SaveAs(save_path, 3)  # 3: olMSG
     print("Sending")
     mail_item.Send()

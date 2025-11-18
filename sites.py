@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import requests.exceptions
 
 from data_import import get_all_sites_domain_names
+from set_env import get_box_path, settings
 
 # all_site_list =[
 #     "aac.sfsu.edu",
@@ -421,7 +422,7 @@ from ..box_handler import get_box_contents
 class {class_name}(scrapy.Spider):
     name = '{name}'
     start_urls = ['https://{site_url}']
-    output_folder = r'C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans\\{save_folder}'
+    output_folder = r'{box_base_path}\\{save_folder}'
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -512,7 +513,7 @@ class {class_name}(scrapy.Spider):
         self.logger.info("PDF LINKS saved to %s", output_file_path)
 """
 
-output_dir = "sf_state_pdf_scan/sf_state_pdf_scan/spiders"
+output_dir = settings.get('spider.output_dir')
 os.makedirs(output_dir, exist_ok=True)
 
 all_sites = get_all_sites_domain_names()
@@ -575,7 +576,8 @@ for site in all_sites:
         name=f"{site_name_cleaned_for_name.lower().replace(' ', '_')}_spider",
         site_url=site,
         spider_name=site_name_cleaned_for_name.lower(),  # extra arg, not used in template, but no harm
-        save_folder=save_folder
+        save_folder=save_folder,
+        box_base_path=get_box_path('pdf_scans')
     )
 
     file_path = os.path.join(output_dir, f"{site_name_cleaned_for_file_title.lower()}_spider.py")

@@ -8,13 +8,14 @@ import csv
 from data_import import get_site_id_from_domain_name
 from filters import check_for_node, is_high_priority
 from openpyxl.worksheet.datavalidation import DataValidation
+from set_env import get_database_path
 
 def get_all_sites():
 
 
     with open("sql/get_all_sites.sql", 'r') as file:
         sql_query = file.read()
-        conn = sqlite3.connect("drupal_pdfs.db")
+        conn = sqlite3.connect(get_database_path())
         cursor = conn.cursor()
         cursor.execute(sql_query)
         results = cursor.fetchall()
@@ -32,7 +33,7 @@ def get_pdf_reports_by_site_name(site_name):
         sql_query = file.read()
         formatted_query = sql_query.format(site_name=site_name)
 
-        conn = sqlite3.connect("drupal_pdfs.db")
+        conn = sqlite3.connect(get_database_path())
         cursor = conn.cursor()
 
         # Execute the SQL query
@@ -62,7 +63,7 @@ def get_pdfs_by_site_name(site_name):
     with open("sql/get_pdfs_by_domain_name.sql", 'r') as file:
         sql_query = file.read()
         formatted_query = sql_query.format(site_name=site_name)
-        conn = sqlite3.connect("drupal_pdfs.db")
+        conn = sqlite3.connect(get_database_path())
         cursor = conn.cursor()
         cursor.execute(formatted_query)
         results = cursor.fetchall()
@@ -77,7 +78,7 @@ def get_pdfs_by_site_name(site_name):
 def get_all_users_with_pdfs():
     with open("sql/get_all_users_with_pdf_files.sql", 'r') as file:
         sql_query = file.read()
-        conn = sqlite3.connect("drupal_pdfs.db")
+        conn = sqlite3.connect(get_database_path())
         cursor = conn.cursor()
         cursor.execute(sql_query)
         results = cursor.fetchall()
@@ -97,7 +98,7 @@ def get_site_failures(site_name):
 
         site_id = get_site_id_from_domain_name(site_name.replace("-", "."))
         formatted_query = sql_query.format(site_id=site_id)
-        conn = sqlite3.connect("drupal_pdfs.db")
+        conn = sqlite3.connect(get_database_path())
         cursor = conn.cursor()
 
         cursor.execute(formatted_query)

@@ -12,10 +12,11 @@ from data_import import add_pdf_file_to_database, get_site_id_by_domain_name, ch
     add_pdf_report_failure
 from pdf_priority import violation_counter, pdf_check, pdf_status
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import box_share_pattern_match, download_from_box
+from set_env import get_project_path, get_database_path
 
 
-temp_pdf_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp.pdf"
-temp_profile_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp_profile.json"
+temp_pdf_path = get_project_path('temp_pdf')
+temp_profile_path = get_project_path('temp_profile')
 
 def download_pdf_into_memory(url, loc, domain_id, timeout=30, allow_insecure_retry=True):
     import urllib3
@@ -155,7 +156,7 @@ def mark_replaced_pdfs_as_removed(domain_id):
 
     formatted_query = query.format(site_name=domain_id)
     print(formatted_query)
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
     cursor.execute(formatted_query)
 

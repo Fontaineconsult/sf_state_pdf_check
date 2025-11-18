@@ -14,10 +14,11 @@ from conformance_checker import loop_through_files_in_folder
 from data_export import get_pdf_reports_by_site_name
 from data_import import get_site_id_by_domain_name, mark_pdf_as_removed
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import download_from_box, box_share_pattern_match
+from set_env import get_box_path, get_database_path
 
 
-pdf_sites_folder = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans"
-scans_output = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans\\{}"
+pdf_sites_folder = get_box_path('pdf_scans')
+scans_output = get_box_path('pdf_scans') + "\\{}"
 
 
 def delete_scans_files(root_folder):
@@ -35,7 +36,7 @@ def delete_scans_files(root_folder):
 
 
 def remove_timestamps_from_parent_urls():
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
     pdfs = cursor.execute("SELECT * FROM drupal_pdf_files").fetchall()
 
@@ -55,7 +56,7 @@ def remove_timestamps_from_parent_urls():
     conn.close()
 
 def strip_trailing_items_from_pdf_urls():
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
     pdfs = cursor.execute("SELECT * FROM drupal_pdf_files").fetchall()
 
@@ -85,7 +86,7 @@ def delete_duplicate_entries():
     The site names are retrieved by executing the SQL query stored in get_all_sites.sql.
     """
     # Connect to the SQLite database.
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
 
     # Read the get_all_sites.sql file, which contains:
@@ -115,7 +116,7 @@ def delete_duplicate_entries():
 
 
 def download_all_dprc_will_remediate_pdfs_by_site(site_name):
-    box_folder = rf'C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\{site_name}'
+    box_folder = os.path.join(get_box_path('pdf_scans'), site_name)
     box_temp_folder = os.path.join(box_folder, 'temp')
     xlsx_file = os.path.join(box_folder, f"{site_name.split('-')[0]}-pdf-scans.xlsx")
 

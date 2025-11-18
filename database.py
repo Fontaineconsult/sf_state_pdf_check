@@ -1,7 +1,9 @@
 import sqlite3
 import csv
+from set_env import get_database_path
+
 # Define the connection and cursor
-conn = sqlite3.connect('drupal_pdfs.db')
+conn = sqlite3.connect(get_database_path())
 cursor = conn.cursor()
 
 # Define SQL commands to create three tables

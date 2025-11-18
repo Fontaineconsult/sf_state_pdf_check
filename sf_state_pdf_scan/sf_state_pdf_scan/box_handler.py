@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import re
 import lxml
 from data_import import add_pdf_report_failure
+from set_env import get_project_path
 
 
 def get_box_contents(box_url):
@@ -50,10 +51,11 @@ def get_box_contents(box_url):
 
 
 
-temp_pdf_path = "C:\\Users\\913678186\\IdeaProjects\\sf_state_pdf_website_scan\\temp\\temp.pdf"
-
 import re
 import requests
+
+# Get temp PDF path from settings
+temp_pdf_path = get_project_path('temp_pdf')
 
 def download_from_box(box_link, loc=None, domain_id=None, head=False):
     """

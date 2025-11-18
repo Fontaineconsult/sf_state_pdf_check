@@ -7,9 +7,10 @@ from database import create_pdf_report
 from filters import check_for_node, is_high_priority
 from scan_refresh import refresh_status
 from tools import mark_pdfs_as_removed
+from set_env import get_box_path
 
-pdf_sites_folder = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans"
-scans_output = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans\\{}"
+pdf_sites_folder = get_box_path('pdf_scans')
+scans_output = get_box_path('pdf_scans') + "\\{}"
 
 
 def build_all_xcel_reports():
@@ -136,13 +137,13 @@ def create_all_pdf_reports():
 
 
 def single_site_full_refresh():
-    single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\access-sfsu-edu")
+    single_site_pdf_scan(os.path.join(get_box_path('pdf_scans'), "access-sfsu-edu"))
     refresh_status(site="access.sfsu.edu")
     mark_pdfs_as_removed(pdf_sites_folder)
     refresh_existing_pdf_reports(single_domain="access.sfsu.edu")
 
 if __name__=="__main__":
-    single_site_full_refresh()
+    create_all_pdf_reports()
 
 
 # create_all_pdf_reports()

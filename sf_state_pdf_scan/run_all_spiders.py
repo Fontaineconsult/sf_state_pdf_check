@@ -1,10 +1,16 @@
 import os
+import sys
+from pathlib import Path
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 from scrapy import spiderloader, signals
 from pydispatch import dispatcher
 
-COMPLETED_FILE = r'C:\Users\913678186\IdeaProjects\sf_state_pdf_website_scan\sf_state_pdf_scan\sf_state_pdf_scan\completed_spiders.txt'
+# Add parent directory to path to import set_env
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from set_env import get_project_path
+
+COMPLETED_FILE = get_project_path('completed_spiders')
 
 def load_completed():
     if not os.path.exists(COMPLETED_FILE):

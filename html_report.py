@@ -2,6 +2,7 @@ import math
 from jinja2 import Environment, FileSystemLoader
 from data_export import get_all_sites, get_pdf_reports_by_site_name
 import sqlite3
+from set_env import get_database_path, settings
 
 # Setup Jinja2 Environment (Global)
 env = Environment(loader=FileSystemLoader('.'))
@@ -19,7 +20,7 @@ def get_all_pdf_stats():
         query = file.read()
 
     # Connect to the SQLite database.
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
 
     # Execute the SQL query.
@@ -48,7 +49,7 @@ def get_all_sites_with_pdfs():
     with open("sql/get_all_sites_with_pdfs.sql", "r") as file:
         query = file.read()
 
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
     cursor.execute(query)
     rows = cursor.fetchall()
@@ -204,14 +205,14 @@ def main():
         "metrics": metrics,
         "stats": stats,
         "site_pdf_counts": site_pdf_counts,
-        "scan_month": "October 2025"
+        "scan_month": settings.get('report.scan_month')
     }
 
     # Render the template
     rendered_html = render_template("monthly_report.html", context)
 
     # Save the rendered HTML
-    save_html(rendered_html, 'Drupal-PDF-Accessibility-Report-October-2025.html')
+    save_html(rendered_html, settings.get('report.output_filename'))
 
 if __name__ == "__main__":
     main()
