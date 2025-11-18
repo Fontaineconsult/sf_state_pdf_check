@@ -1,0 +1,37 @@
+# Application Configuration
+# These settings are consistent across all environments
+
+database:
+  filename: drupal_pdfs.db
+
+# Relative paths within Box folder structure
+box_paths:
+  email_template: Reports\build_files\email_template.html
+  mpp_emails: MPP Emails
+  followup_emails: Follow-Up Emails
+  followup_template: Reports\build_files\templates\mpp_followup_contact_email.html
+  excel_workbook: PDF Project Documents\drupal_pdf_working_group.xlsx
+  pdf_scans: SF State Website PDF Scans
+
+# Relative paths within project folder structure
+project_paths:
+  temp_dir: temp
+  temp_pdf: temp\temp.pdf
+  temp_profile: temp\temp_profile.json
+  emails_dir: emails
+  email_msg: emails\email.msg
+  sql_admin_contacts: sql\get_admin_contacts.sql
+
+# Email configuration
+email:
+  send_on_behalf: access@sfsu.edu
+  default_recipient: fontaine@sfsu.edu
+
+# Report configuration
+report:
+  scan_month: October 2025
+  output_filename: Drupal-PDF-Accessibility-Report-October-2025.html
+
+# Spider configuration
+spider:
+  output_dir: sf_state_pdf_scan\sf_state_pdf_scan\spiders
