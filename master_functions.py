@@ -8,6 +8,7 @@ from filters import check_for_node, is_high_priority
 from scan_refresh import refresh_status
 from tools import mark_pdfs_as_removed
 from set_env import get_box_path
+from update_archived import update_archives
 
 pdf_sites_folder = get_box_path('pdf_scans')
 scans_output = get_box_path('pdf_scans') + "\\{}"
@@ -134,6 +135,8 @@ def create_all_pdf_reports():
     mark_pdfs_as_removed(pdf_sites_folder)
     # refresh_existing_pdf_reports
     refresh_existing_pdf_reports()
+    # update archive status
+    update_archives()
 
 
 def single_site_full_refresh():
