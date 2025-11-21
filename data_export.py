@@ -332,4 +332,43 @@ def write_data_to_excel(data, failure_data, file_name="output.xlsx"):
     print(f"Data written to {file_name} with a table format and merged instructions.")
 
 
+def generate_pdf_stats_csv():
+    """
+    Runs the all_pdf_stats.sql query and returns the results as CSV data.
+    Returns a string containing the CSV data.
+    """
+    import io
+
+    # Read and execute the SQL query
+    with open("sql/all_pdf_stats.sql", 'r') as file:
+        sql_query = file.read()
+
+    conn = sqlite3.connect(get_database_path())
+    cursor = conn.cursor()
+    cursor.execute(sql_query)
+
+    # Get column names
+    col_names = [desc[0] for desc in cursor.description]
+
+    # Fetch all results
+    results = cursor.fetchall()
+    conn.close()
+
+    # Create CSV data in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write header
+    writer.writerow(col_names)
+
+    # Write data rows
+    writer.writerows(results)
+
+    # Get the CSV string
+    csv_data = output.getvalue()
+    output.close()
+
+    return csv_data
+
+
 

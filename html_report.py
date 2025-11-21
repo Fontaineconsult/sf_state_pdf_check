@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
-from data_export import get_all_sites, get_pdf_reports_by_site_name
+from data_export import get_all_sites, get_pdf_reports_by_site_name, generate_pdf_stats_csv
 import sqlite3
 from set_env import get_database_path, settings, get_html_report_output_path
 
@@ -234,6 +234,15 @@ def main():
         # Also save as latest_report.html for easy access
         latest_path = os.path.join(output_path, "latest_report.html")
         save_html(rendered_html, latest_path)
+
+        # Generate and save CSV file with all PDF stats
+        csv_data = generate_pdf_stats_csv()
+        csv_filename = f"pdf_stats_{timestamp}.csv"
+        csv_path = os.path.join(output_path, "archive", csv_filename)
+
+        with open(csv_path, 'w', encoding='utf-8') as csv_file:
+            csv_file.write(csv_data)
+        print(f"PDF stats CSV saved to {csv_path}")
     else:
         # Fallback to original behavior if no path configured
         save_html(rendered_html, settings.get('report.output_filename'))
