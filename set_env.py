@@ -25,7 +25,8 @@ def load_env_variables():
     # Return the loaded variables as a dictionary
     return {
         'BOX_ATI_BASE_PATH': os.getenv('BOX_ATI_BASE_PATH', ''),
-        'PROJECT_BASE_PATH': os.getenv('PROJECT_BASE_PATH', '')
+        'PROJECT_BASE_PATH': os.getenv('PROJECT_BASE_PATH', ''),
+        'HTML_REPORT_OUTPUT_PATH': os.getenv('HTML_REPORT_OUTPUT_PATH', '')
     }
 
 
@@ -147,6 +148,16 @@ def get_project_path(relative_key):
         str: Full path to the project resource
     """
     return settings.get_full_path('project', f'project_paths.{relative_key}')
+
+
+def get_html_report_output_path():
+    """
+    Get the HTML report output path from environment variables.
+
+    Returns:
+        str: Full path to the HTML report output directory
+    """
+    return settings.env_vars.get('HTML_REPORT_OUTPUT_PATH', '')
 
 
 if __name__ == '__main__':

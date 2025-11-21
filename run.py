@@ -21,6 +21,7 @@ from pathlib import Path
 
 # Import the master function for PDF report generation
 from master_functions import create_all_pdf_reports
+import html_report
 
 # Configuration
 LOOP_DELAY = 3600  # Delay between runs in seconds (default: 1 hour)
@@ -134,6 +135,14 @@ class AutomatedRunner:
         report_success = self.run_pdf_reports()
         if not report_success:
             print(f"[{self.get_timestamp()}] Report generation failed")
+
+        # Generate HTML report after PDF reports
+        try:
+            print(f"[{self.get_timestamp()}] Generating HTML accessibility report...")
+            html_report.main()
+            print(f"[{self.get_timestamp()}] HTML report generated successfully")
+        except Exception as e:
+            print(f"[{self.get_timestamp()}] Error generating HTML report: {e}")
 
         if scraper_success and report_success:
             print(f"[{self.get_timestamp()}] Cycle completed successfully")

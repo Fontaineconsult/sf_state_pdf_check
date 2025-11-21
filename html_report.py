@@ -1,8 +1,11 @@
 import math
+import os
+from datetime import datetime
+from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 from data_export import get_all_sites, get_pdf_reports_by_site_name
 import sqlite3
-from set_env import get_database_path, settings
+from set_env import get_database_path, settings, get_html_report_output_path
 
 # Setup Jinja2 Environment (Global)
 env = Environment(loader=FileSystemLoader('.'))
@@ -189,13 +192,11 @@ def main():
     all_sites = fetch_sites()
     site_details = generate_site_details()
 
-
     metrics = compute_metrics(site_details)
     stats = get_all_pdf_stats()  # Get overall PDF statistics from the SQL query
     site_pdf_counts = get_all_sites_with_pdfs()  # Get sites with their respective PDF counts
 
     # Context for the template, including our new 'stats' and 'site_pdf_counts' data.
-
     print(metrics)
     print(stats)
     context = {
@@ -211,8 +212,26 @@ def main():
     # Render the template
     rendered_html = render_template("monthly_report.html", context)
 
-    # Save the rendered HTML
-    save_html(rendered_html, settings.get('report.output_filename'))
+    # Determine output location
+    output_path = get_html_report_output_path()
+    if output_path:
+        # Ensure the directory exists
+        Path(output_path).mkdir(parents=True, exist_ok=True)
+
+        # Generate filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"accessibility_report_{timestamp}.html"
+        full_path = os.path.join(output_path, filename)
+
+        # Save the rendered HTML with timestamp
+        save_html(rendered_html, full_path)
+
+        # Also save as latest_report.html for easy access
+        latest_path = os.path.join(output_path, "latest_report.html")
+        save_html(rendered_html, latest_path)
+    else:
+        # Fallback to original behavior if no path configured
+        save_html(rendered_html, settings.get('report.output_filename'))
 
 if __name__ == "__main__":
     main()
