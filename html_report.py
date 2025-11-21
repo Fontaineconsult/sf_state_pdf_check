@@ -199,6 +199,10 @@ def main():
     # Context for the template, including our new 'stats' and 'site_pdf_counts' data.
     print(metrics)
     print(stats)
+
+    # Generate formatted timestamp
+    generation_timestamp = datetime.now().strftime("%B %d, %Y")
+
     context = {
         "title": "Website Accessibility Report",
         "sites": all_sites,
@@ -206,7 +210,8 @@ def main():
         "metrics": metrics,
         "stats": stats,
         "site_pdf_counts": site_pdf_counts,
-        "scan_month": settings.get('report.scan_month')
+        "scan_month": settings.get('report.scan_month'),
+        "generation_timestamp": generation_timestamp
     }
 
     # Render the template
