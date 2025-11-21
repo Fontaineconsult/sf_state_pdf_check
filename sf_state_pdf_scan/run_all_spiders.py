@@ -1,13 +1,16 @@
-import os
+
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+
+import os
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 from scrapy import spiderloader, signals
 from pydispatch import dispatcher
 
-# Add parent directory to path to import set_env
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from set_env import get_project_path
 
 COMPLETED_FILE = get_project_path('completed_spiders')
@@ -26,6 +29,7 @@ def mark_completed(spider_name):
 
 
 def run_all_spiders():
+
     settings = get_project_settings()
     process = CrawlerProcess(settings)
 

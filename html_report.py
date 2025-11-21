@@ -223,10 +223,10 @@ def main():
         # Ensure the directory exists
         Path(output_path).mkdir(parents=True, exist_ok=True)
 
-        # Generate filename with timestamp
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        # Generate filename with readable timestamp
+        timestamp = datetime.now().strftime('%Y-%m-%d_%I-%M%p')
         filename = f"accessibility_report_{timestamp}.html"
-        full_path = os.path.join(output_path, filename)
+        full_path = os.path.join(output_path, "archive", filename)
 
         # Save the rendered HTML with timestamp
         save_html(rendered_html, full_path)

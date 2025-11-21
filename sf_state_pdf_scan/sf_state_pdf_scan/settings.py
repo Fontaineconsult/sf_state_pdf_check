@@ -9,7 +9,7 @@
 
 # BOT_NAME = "sf_state_pdf_scan"
 
-SPIDER_MODULES = ["sf_state_pdf_scan.spiders"]
+SPIDER_MODULES = ["sf_state_pdf_scan.sf_state_pdf_scan.spiders"]
 NEWSPIDER_MODULE = "sf_state_pdf_scan.spiders"
 
 
