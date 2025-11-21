@@ -1,9 +1,18 @@
 import os
 from datetime import datetime
 
+import sys
+from pathlib import Path
+
+# add this file's parent folder to sys.path
+_parent_dir = str(Path(__file__).resolve().parent)
+if _parent_dir not in sys.path:
+    sys.path.insert(0, _parent_dir)
+
+
 from conformance_checker import full_pdf_scan, refresh_existing_pdf_reports, single_site_pdf_scan
 from data_export import get_pdf_reports_by_site_name, get_all_sites, write_data_to_excel, get_site_failures
-from database import create_pdf_report
+
 from filters import check_for_node, is_high_priority
 from scan_refresh import refresh_status
 from tools import mark_pdfs_as_removed
@@ -12,6 +21,8 @@ from update_archived import update_archives
 
 pdf_sites_folder = get_box_path('pdf_scans')
 scans_output = get_box_path('pdf_scans') + "\\{}"
+
+
 
 
 def build_all_xcel_reports():

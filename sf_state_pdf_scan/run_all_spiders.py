@@ -23,7 +23,9 @@ def mark_completed(spider_name):
     with open(COMPLETED_FILE, 'a') as f:
         f.write(spider_name + '\n')
 
-if __name__ == '__main__':
+
+
+def run_all_spiders():
     settings = get_project_settings()
     process = CrawlerProcess(settings)
 
@@ -59,3 +61,8 @@ if __name__ == '__main__':
 
     run_next()
     process.start()
+
+
+
+if __name__ == '__main__':
+    run_all_spiders()
