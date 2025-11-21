@@ -6,6 +6,7 @@ from collections import defaultdict
 
 import win32com.client
 from openpyxl import load_workbook
+from set_env import get_database_path, get_box_path, settings
 
 
 def sanitize_filename(filename):
@@ -23,7 +24,7 @@ def run_sql_query(sql_file_path, template_html):
 
     # Connect to the SQLite database.
     try:
-        conn = sqlite3.connect("drupal_pdfs.db")
+        conn = sqlite3.connect(get_database_path())
         cursor = conn.cursor()
     except Exception as e:
         print(f"Error connecting to the database: {e}")
@@ -45,7 +46,7 @@ def run_sql_query(sql_file_path, template_html):
         return
 
     # Prepare the output folder for .msg files.
-    output_folder = r"C:\Users\913678186\Box\ATI\PDF Accessibility\MPP Emails"
+    output_folder = get_box_path('mpp_emails')
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
@@ -72,7 +73,7 @@ def run_sql_query(sql_file_path, template_html):
             # Create a new MailItem.
             mail_item = outlook.CreateItem(0)  # 0 indicates a MailItem.
             mail_item.To = recipient_email
-            mail_item.SentOnBehalfOfName = "access@sfsu.edu"
+            mail_item.SentOnBehalfOfName = settings.get('email.send_on_behalf')
             mail_item.Subject = "SF State ATI | Drupal PDF Accessibility Remediation"
             mail_item.HTMLBody = html_content
 
@@ -125,7 +126,7 @@ def generate_followup_emails(excel_sheet, sql_file_path, template_html):
         return
 
     try:
-        conn = sqlite3.connect("drupal_pdfs.db")
+        conn = sqlite3.connect(get_database_path())
         cursor = conn.cursor()
         cursor.execute(sql_query)
         results = cursor.fetchall()
@@ -161,7 +162,7 @@ def generate_followup_emails(excel_sheet, sql_file_path, template_html):
         return
 
     # Output folder
-    output_folder = r"C:\Users\913678186\Box\ATI\PDF Accessibility\Follow-Up Emails"
+    output_folder = get_box_path('followup_emails')
     os.makedirs(output_folder, exist_ok=True)
 
     # Generate one email per unique address
@@ -178,7 +179,7 @@ def generate_followup_emails(excel_sheet, sql_file_path, template_html):
 
             mail_item = outlook.CreateItem(0)
             mail_item.To = email
-            mail_item.SentOnBehalfOfName = "access@sfsu.edu"
+            mail_item.SentOnBehalfOfName = settings.get('email.send_on_behalf')
             mail_item.Subject = "SF State ATI | Follow-Up: Drupal PDF Accessibility"
             mail_item.HTMLBody = html_content
 
@@ -193,11 +194,13 @@ def generate_followup_emails(excel_sheet, sql_file_path, template_html):
 
 
 if __name__ == "__main__":
+    from set_env import get_project_path
+
     # Path to the SQL file with your query.
-    sql_file_path = r"C:\Users\913678186\IdeaProjects\sf_state_pdf_website_scan\sql\get_admin_contacts.sql"
+    sql_file_path = get_project_path('sql_admin_contacts')
 
     # Path to the HTML template file.
-    template_html_path = r"C:\Users\913678186\Box\ATI\PDF Accessibility\Reports\build_files\templates\mpp_followup_contact_email.html"
+    template_html_path = get_box_path('followup_template')
 
     # Open and read the HTML template file.
     try:
@@ -207,6 +210,6 @@ if __name__ == "__main__":
         print(f"Error reading HTML template file: {e}")
         exit(1)
 
-    generate_followup_emails(r"C:\Users\913678186\Box\ATI\PDF Accessibility\PDF Project Documents\drupal_pdf_working_group.xlsx",
-                             # sql_file_path,
-                             # template_html)
+    generate_followup_emails(get_box_path('excel_workbook'),
+                             sql_file_path,
+                             template_html)

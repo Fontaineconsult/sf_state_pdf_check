@@ -1,8 +1,17 @@
+
+
+
 import sqlite3
+import sys
+from pathlib import Path
+
 import requests
+
+
 
 from data_export import get_pdfs_by_site_name
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import box_share_pattern_match, download_from_box
+from set_env import get_database_path
 
 def check_box_pdf_status(pdf_uri):
     """
@@ -57,7 +66,7 @@ def refresh_status(box_only=False, site=None):
     Parameters:
         box_only (bool): If True, only check PDF URIs that are Box share links. Defaults to False.
     """
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
     pdfs = cursor.execute("SELECT * FROM drupal_pdf_files").fetchall()
 

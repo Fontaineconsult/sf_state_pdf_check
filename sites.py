@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import requests.exceptions
 
 from data_import import get_all_sites_domain_names
+from set_env import get_box_path, settings
 
 # all_site_list =[
 #     "aac.sfsu.edu",
@@ -421,7 +422,7 @@ from ..box_handler import get_box_contents
 class {class_name}(scrapy.Spider):
     name = '{name}'
     start_urls = ['https://{site_url}']
-    output_folder = r'C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans\\{save_folder}'
+    output_folder = r'{box_base_path}\\{save_folder}'
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -512,7 +513,7 @@ class {class_name}(scrapy.Spider):
         self.logger.info("PDF LINKS saved to %s", output_file_path)
 """
 
-output_dir = "sf_state_pdf_scan/sf_state_pdf_scan/spiders"
+output_dir = settings.get('spider.output_dir')
 os.makedirs(output_dir, exist_ok=True)
 
 all_sites = get_all_sites_domain_names()
@@ -522,66 +523,70 @@ site_name_counts = {}
 
 failed = []
 
-for site in all_sites:
-    time.sleep(0.1)
-    try:
-        response = requests.get("https://" + site)
-    except (requests.exceptions.SSLError, requests.exceptions.ConnectionError):
-        failed.append(site)
-        continue
 
-    soup = BeautifulSoup(response.content, 'html.parser')
+def generate_spiders():
 
-    site_name_tag = soup.find('span', class_='site-name')
-    if site_name_tag and site_name_tag.find('a'):
-        base_site_name = site_name_tag.find('a').text.strip()
-    else:
-        base_site_name = 'SiteNameNotFound'
+    for site in all_sites:
+        time.sleep(0.1)
+        try:
+            response = requests.get("https://" + site)
+        except (requests.exceptions.SSLError, requests.exceptions.ConnectionError):
+            failed.append(site)
+            continue
 
-    # Get the current count for this base site name and update it
-    count = site_name_counts.get(base_site_name, 0)
-    if count > 0:
-        unique_site_name = f"{base_site_name}{count}"
-    else:
-        unique_site_name = base_site_name
-    site_name_counts[base_site_name] = count + 1
+        soup = BeautifulSoup(response.content, 'html.parser')
 
-    # Use unique_site_name for further processing
+        site_name_tag = soup.find('span', class_='site-name')
+        if site_name_tag and site_name_tag.find('a'):
+            base_site_name = site_name_tag.find('a').text.strip()
+        else:
+            base_site_name = 'SiteNameNotFound'
 
-    # Clean the unique site name for the class name (e.g. "My Site" -> "MySiteSpider")
-    site_name_cleaned_for_class = ''.join(
-        word.capitalize()
-        for word in ''.join(e if e.isalnum() or e.isspace() else ' ' for e in unique_site_name).split()
-    )
+        # Get the current count for this base site name and update it
+        count = site_name_counts.get(base_site_name, 0)
+        if count > 0:
+            unique_site_name = f"{base_site_name}{count}"
+        else:
+            unique_site_name = base_site_name
+        site_name_counts[base_site_name] = count + 1
 
-    # Clean for the spider name, removing non-alphanumeric but allowing spaces
-    site_name_cleaned_for_name = ''.join(
-        e if e.isalnum() or e.isspace() else ''
-        for e in unique_site_name
-    )
+        # Use unique_site_name for further processing
 
-    # Clean for the file title (replace spaces with underscores)
-    site_name_cleaned_for_file_title = ''.join(
-        e if e.isalnum() or e.isspace() else ''
-        for e in unique_site_name
-    ).replace(' ', '_')
+        # Clean the unique site name for the class name (e.g. "My Site" -> "MySiteSpider")
+        site_name_cleaned_for_class = ''.join(
+            word.capitalize()
+            for word in ''.join(e if e.isalnum() or e.isspace() else ' ' for e in unique_site_name).split()
+        )
 
-    save_folder = site.replace('.', '-').lower()
+        # Clean for the spider name, removing non-alphanumeric but allowing spaces
+        site_name_cleaned_for_name = ''.join(
+            e if e.isalnum() or e.isspace() else ''
+            for e in unique_site_name
+        )
 
-    class_name = f"{site_name_cleaned_for_class}Spider"
+        # Clean for the file title (replace spaces with underscores)
+        site_name_cleaned_for_file_title = ''.join(
+            e if e.isalnum() or e.isspace() else ''
+            for e in unique_site_name
+        ).replace(' ', '_')
 
-    spider_code = spider_template.format(
-        class_name=class_name,
-        name=f"{site_name_cleaned_for_name.lower().replace(' ', '_')}_spider",
-        site_url=site,
-        spider_name=site_name_cleaned_for_name.lower(),  # extra arg, not used in template, but no harm
-        save_folder=save_folder
-    )
+        save_folder = site.replace('.', '-').lower()
 
-    file_path = os.path.join(output_dir, f"{site_name_cleaned_for_file_title.lower()}_spider.py")
-    with open(file_path, 'w', encoding="utf-8") as file:
-        file.write(spider_code)
+        class_name = f"{site_name_cleaned_for_class}Spider"
 
-    print(f"Generated spider for {site}: {file_path}")
+        spider_code = spider_template.format(
+            class_name=class_name,
+            name=f"{site_name_cleaned_for_name.lower().replace(' ', '_')}_spider",
+            site_url=site,
+            spider_name=site_name_cleaned_for_name.lower(),  # extra arg, not used in template, but no harm
+            save_folder=save_folder,
+            box_base_path=get_box_path('pdf_scans')
+        )
 
-print(f"Failed sites: {failed}")
+        file_path = os.path.join(output_dir, f"{site_name_cleaned_for_file_title.lower()}_spider.py")
+        with open(file_path, 'w', encoding="utf-8") as file:
+            file.write(spider_code)
+
+        print(f"Generated spider for {site}: {file_path}")
+
+    print(f"Failed sites: {failed}")

@@ -2,6 +2,7 @@ import sqlite3
 from collections import namedtuple
 
 from filters import is_high_priority
+from set_env import get_database_path, get_box_path
 
 
 def generate_pdf_count_by_employee(employee_id):
@@ -10,7 +11,7 @@ def generate_pdf_count_by_employee(employee_id):
     with open('sql/get_pdfs_by_user_id.sql', 'r') as file:
         sql_query = file.read()
         formatted_query = sql_query.format(employee_id=employee_id)
-        conn = sqlite3.connect("drupal_pdfs.db")
+        conn = sqlite3.connect(get_database_path())
         cursor = conn.cursor()
 
         # Execute the SQL query
@@ -20,7 +21,7 @@ def generate_pdf_count_by_employee(employee_id):
 
     with open('sql/get_pdf_reports_by_site_name.sql') as pdf_reports_sql:
         sql_query = pdf_reports_sql.read()
-        conn = sqlite3.connect("drupal_pdfs.db")
+        conn = sqlite3.connect(get_database_path())
         cursor = conn.cursor()
 
         for domain in domains:
@@ -102,7 +103,7 @@ def create_html_email_grid(data):
 
 def template_email(data_dict):
 
-    with open(r"C:\Users\913678186\Box\ATI\PDF Accessibility\Reports\build_files\email_template.html", "r") as file:
+    with open(get_box_path('email_template'), "r") as file:
         email_template = file.read()
         formatted_template = email_template.format(**data_dict)
         return formatted_template
@@ -114,7 +115,7 @@ def build_emails():
     emails = []
     with open('sql/get_all_users_with_pdf_files.sql') as pdf_reports_sql:
         sql_query = pdf_reports_sql.read()
-        conn = sqlite3.connect("drupal_pdfs.db")
+        conn = sqlite3.connect(get_database_path())
         cursor = conn.cursor()
         cursor.execute(sql_query)
         results = cursor.fetchall()

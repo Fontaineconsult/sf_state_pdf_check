@@ -21,6 +21,7 @@ project_paths:
   emails_dir: emails
   email_msg: emails\email.msg
   sql_admin_contacts: sql\get_admin_contacts.sql
+  completed_spiders: sf_state_pdf_scan\sf_state_pdf_scan\completed_spiders.txt
 
 # Email configuration
 email:

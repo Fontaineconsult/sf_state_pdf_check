@@ -1,7 +1,11 @@
 import math
+import os
+from datetime import datetime
+from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
-from data_export import get_all_sites, get_pdf_reports_by_site_name
+from data_export import get_all_sites, get_pdf_reports_by_site_name, generate_pdf_stats_csv
 import sqlite3
+from set_env import get_database_path, settings, get_html_report_output_path
 
 # Setup Jinja2 Environment (Global)
 env = Environment(loader=FileSystemLoader('.'))
@@ -19,7 +23,7 @@ def get_all_pdf_stats():
         query = file.read()
 
     # Connect to the SQLite database.
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
 
     # Execute the SQL query.
@@ -48,7 +52,7 @@ def get_all_sites_with_pdfs():
     with open("sql/get_all_sites_with_pdfs.sql", "r") as file:
         query = file.read()
 
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
     cursor.execute(query)
     rows = cursor.fetchall()
@@ -188,15 +192,17 @@ def main():
     all_sites = fetch_sites()
     site_details = generate_site_details()
 
-
     metrics = compute_metrics(site_details)
     stats = get_all_pdf_stats()  # Get overall PDF statistics from the SQL query
     site_pdf_counts = get_all_sites_with_pdfs()  # Get sites with their respective PDF counts
 
     # Context for the template, including our new 'stats' and 'site_pdf_counts' data.
-
     print(metrics)
     print(stats)
+
+    # Generate formatted timestamp
+    generation_timestamp = datetime.now().strftime("%B %d, %Y")
+
     context = {
         "title": "Website Accessibility Report",
         "sites": all_sites,
@@ -204,14 +210,42 @@ def main():
         "metrics": metrics,
         "stats": stats,
         "site_pdf_counts": site_pdf_counts,
-        "scan_month": "October 2025"
+        "scan_month": settings.get('report.scan_month'),
+        "generation_timestamp": generation_timestamp
     }
 
     # Render the template
     rendered_html = render_template("monthly_report.html", context)
 
-    # Save the rendered HTML
-    save_html(rendered_html, 'Drupal-PDF-Accessibility-Report-October-2025.html')
+    # Determine output location
+    output_path = get_html_report_output_path()
+    if output_path:
+        # Ensure the directory exists
+        Path(output_path).mkdir(parents=True, exist_ok=True)
+
+        # Generate filename with readable timestamp
+        timestamp = datetime.now().strftime('%Y-%m-%d_%I-%M%p')
+        filename = f"accessibility_report_{timestamp}.html"
+        full_path = os.path.join(output_path, "archive", filename)
+
+        # Save the rendered HTML with timestamp
+        save_html(rendered_html, full_path)
+
+        # Also save as latest_report.html for easy access
+        latest_path = os.path.join(output_path, "latest_report.html")
+        save_html(rendered_html, latest_path)
+
+        # Generate and save CSV file with all PDF stats
+        csv_data = generate_pdf_stats_csv()
+        csv_filename = f"pdf_stats_{timestamp}.csv"
+        csv_path = os.path.join(output_path, "archive", csv_filename)
+
+        with open(csv_path, 'w', encoding='utf-8') as csv_file:
+            csv_file.write(csv_data)
+        print(f"PDF stats CSV saved to {csv_path}")
+    else:
+        # Fallback to original behavior if no path configured
+        save_html(rendered_html, settings.get('report.output_filename'))
 
 if __name__ == "__main__":
     main()

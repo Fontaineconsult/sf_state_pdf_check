@@ -1,15 +1,28 @@
 import os
 from datetime import datetime
 
+import sys
+from pathlib import Path
+
+# add this file's parent folder to sys.path
+_parent_dir = str(Path(__file__).resolve().parent)
+if _parent_dir not in sys.path:
+    sys.path.insert(0, _parent_dir)
+
+
 from conformance_checker import full_pdf_scan, refresh_existing_pdf_reports, single_site_pdf_scan
 from data_export import get_pdf_reports_by_site_name, get_all_sites, write_data_to_excel, get_site_failures
-from database import create_pdf_report
+
 from filters import check_for_node, is_high_priority
 from scan_refresh import refresh_status
 from tools import mark_pdfs_as_removed
+from set_env import get_box_path
+from update_archived import update_archives
 
-pdf_sites_folder = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans"
-scans_output = "C:\\Users\\913678186\\Box\\ATI\\PDF Accessibility\\SF State Website PDF Scans\\{}"
+pdf_sites_folder = get_box_path('pdf_scans')
+scans_output = get_box_path('pdf_scans') + "\\{}"
+
+
 
 
 def build_all_xcel_reports():
@@ -133,16 +146,18 @@ def create_all_pdf_reports():
     mark_pdfs_as_removed(pdf_sites_folder)
     # refresh_existing_pdf_reports
     refresh_existing_pdf_reports()
+    # update archive status
+    update_archives()
 
 
 def single_site_full_refresh():
-    single_site_pdf_scan(r"C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\access-sfsu-edu")
+    single_site_pdf_scan(os.path.join(get_box_path('pdf_scans'), "access-sfsu-edu"))
     refresh_status(site="access.sfsu.edu")
     mark_pdfs_as_removed(pdf_sites_folder)
     refresh_existing_pdf_reports(single_domain="access.sfsu.edu")
 
 if __name__=="__main__":
-    single_site_full_refresh()
+    create_all_pdf_reports()
 
 
 # create_all_pdf_reports()
