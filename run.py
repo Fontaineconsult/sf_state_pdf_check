@@ -21,6 +21,9 @@ from master_functions import create_all_pdf_reports
 # Import HTML report function
 from html_report import main as generate_html_report
 
+# Import spider generation function
+from sites import generate_spiders
+
 COMPLETED_SPIDERS_FILE = 'sf_state_pdf_scan/sf_state_pdf_scan/completed_spiders.txt'
 
 
@@ -57,6 +60,12 @@ def run_pdf_reports():
 def run_html_report():
     """Generate HTML accessibility report."""
     generate_html_report()
+    return True
+
+
+def run_generate_spiders():
+    """Generate spider files for all sites."""
+    generate_spiders()
     return True
 
 
@@ -112,6 +121,7 @@ def run_loop():
 
 def main():
     parser = argparse.ArgumentParser(description='SF State PDF Scanner')
+    parser.add_argument('--generate-spiders', action='store_true', help='Generate spider files for all sites')
     parser.add_argument('--spiders', action='store_true', help='Run web spiders')
     parser.add_argument('--pdf-reports', action='store_true', help='Run PDF accessibility verification')
     parser.add_argument('--html-report', action='store_true', help='Generate HTML accessibility report')
@@ -120,7 +130,9 @@ def main():
 
     args = parser.parse_args()
 
-    if args.spiders:
+    if args.generate_spiders:
+        run_generate_spiders()
+    elif args.spiders:
         run_spiders()
     elif args.pdf_reports:
         run_pdf_reports()
