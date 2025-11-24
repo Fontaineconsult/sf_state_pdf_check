@@ -69,7 +69,22 @@ def violation_counter(json_file):
         validation = json.load(validation_file)
         print("SDFD", validation)
 
-        rule_summaries = validation['report']['jobs'][0]['validationResult']['details']['ruleSummaries']
+        # Get validationResult (could be list or dict depending on VeraPDF version)
+        validation_result = validation['report']['jobs'][0]['validationResult']
+
+        # Handle both list and dict structures
+        if isinstance(validation_result, list):
+            # Current VeraPDF returns validationResult as a list
+            if len(validation_result) == 0:
+                return violations  # No validation results, return empty violations
+            validation_result = validation_result[0]  # Get first item from list
+        elif not isinstance(validation_result, dict):
+            # Unexpected type - log it and return empty violations
+            print(f"Warning: Unexpected validationResult type: {type(validation_result)}")
+            return violations
+
+        # Now safely access the nested structure
+        rule_summaries = validation_result['details']['ruleSummaries']
 
         for rule in rule_summaries:
 
