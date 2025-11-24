@@ -69,7 +69,7 @@ def violation_counter(json_file):
         validation = json.load(validation_file)
 
         rule_summaries = validation['report']['jobs'][0]['validationResult']['details']['ruleSummaries']
-
+        print(rule_summaries)
         for rule in rule_summaries:
 
             if find_ignore_profile(dict(rule)):
