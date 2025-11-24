@@ -67,9 +67,10 @@ def violation_counter(json_file):
     # Now, open the file with the detected encoding
     with open(json_file, 'r', encoding=encoding) as validation_file:
         validation = json.load(validation_file)
+        print("SDFD", validation)
 
         rule_summaries = validation['report']['jobs'][0]['validationResult']['details']['ruleSummaries']
-        print(rule_summaries)
+
         for rule in rule_summaries:
 
             if find_ignore_profile(dict(rule)):
