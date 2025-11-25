@@ -14,6 +14,7 @@ sys.path.insert(0, str(project_root))
 
 # Import the spider runner function
 from sf_state_pdf_scan.run_all_spiders import run_all_spiders
+from sf_state_pdf_scan.run_spider_by_name import run_spider_by_name
 
 # Import PDF report function
 from master_functions import create_all_pdf_reports
@@ -48,6 +49,22 @@ def run_spiders():
     run_all_spiders()
     os.chdir(original_dir)
     clear_completed_spiders()
+    return True
+
+
+def run_single_spider(spider_name):
+    """Run a single spider by name."""
+    original_dir = os.getcwd()
+    spider_dir = Path(__file__).parent / 'sf_state_pdf_scan'
+
+    # Set Scrapy settings module environment variable
+    os.environ['SCRAPY_SETTINGS_MODULE'] = 'sf_state_pdf_scan.sf_state_pdf_scan.settings'
+
+    os.chdir(spider_dir)
+
+    print(f"Running spider: {spider_name}")
+    run_spider_by_name(spider_name)
+    os.chdir(original_dir)
     return True
 
 
@@ -123,6 +140,7 @@ def main():
     parser = argparse.ArgumentParser(description='SF State PDF Scanner')
     parser.add_argument('--generate-spiders', action='store_true', help='Generate spider files for all sites')
     parser.add_argument('--spiders', action='store_true', help='Run web spiders')
+    parser.add_argument('--spider', type=str, metavar='NAME', help='Run a single spider by name')
     parser.add_argument('--pdf-reports', action='store_true', help='Run PDF accessibility verification')
     parser.add_argument('--html-report', action='store_true', help='Generate HTML accessibility report')
     parser.add_argument('--cycle', action='store_true', help='Run one full cycle of all components')
@@ -134,6 +152,8 @@ def main():
         run_generate_spiders()
     elif args.spiders:
         run_spiders()
+    elif args.spider:
+        run_single_spider(args.spider)
     elif args.pdf_reports:
         run_pdf_reports()
     elif args.html_report:
