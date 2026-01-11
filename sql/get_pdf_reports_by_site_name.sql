@@ -18,7 +18,8 @@ SELECT
     drupal_site.box_folder,
     drupal_pdf_files.parent_returns_404,
     drupal_pdf_files.pdf_returns_404,
-    drupal_pdf_files.pdf_is_archived
+    drupal_pdf_files.pdf_is_archived,
+    drupal_pdf_files.passed_contains_accessible_in_title
 
 FROM
     drupal_pdf_files
