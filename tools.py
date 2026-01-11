@@ -227,6 +227,10 @@ def get_all_folders_by_date_modified(folder_path, date_modified):
 
 # download_all_dprc_will_remediate_pdfs_by_site('cob-sfsu-edu')
 
+def mark_pdfs_with_accessible_in_title_as_passed():
+    pass
+
+
 
 def mark_pdfs_as_removed(site_folders):
     """
