@@ -82,6 +82,7 @@ def fetch_pdf_reports():
     return site_pdf_reports
 
 def is_high_priority(data):
+    print(data)
     """Determine if a PDF requires review based on accessibility flags."""
     if not isinstance(data, dict):
         data = dict(data._asdict())
@@ -126,8 +127,8 @@ def sanitize_pdf_data(pdf_report):
         "full_file_hash": full_fingerprint,  # Full hash for tooltip
         "high_priority": is_high_priority(pdf_report),  # Add priority flag
         "errors_per_page": errors_per_page, # Precomputed errors/page value
-        "pdf_is_archived": pdf_report.pdf_is_archived or 0  # Add archived flag
-
+        "pdf_is_archived": pdf_report.pdf_is_archived or 0,  # Add archived flag
+        "passed_contains_accessible_in_title": pdf_report.passed_contains_accessible_in_title or 0
     }
 
 def generate_site_details():
