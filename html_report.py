@@ -92,6 +92,8 @@ def is_high_priority(data):
         return True
     if data['approved_pdf_exporter']:
         return False
+    if data['passed_contains_accessible_in_title'] == 1:
+        return False
     if int(data['page_count']) > 0 and round(int(data['failed_checks']) / int(data['page_count'])) > 20:
         return True
     if data['has_form'] == 1 and int(data['page_count']) > 0 and round(int(data['failed_checks']) / int(data['page_count'])) > 3:

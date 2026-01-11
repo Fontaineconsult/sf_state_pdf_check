@@ -228,7 +228,24 @@ def get_all_folders_by_date_modified(folder_path, date_modified):
 # download_all_dprc_will_remediate_pdfs_by_site('cob-sfsu-edu')
 
 def mark_pdfs_with_accessible_in_title_as_passed():
-    pass
+    """
+    Mark PDFs as passed if their pdf_uri contains 'accessible' (case-insensitive).
+    Updates the passed_contains_accessible_in_title column to 1 (true) for matching PDFs.
+    """
+    conn = sqlite3.connect(get_database_path())
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE drupal_pdf_files
+        SET passed_contains_accessible_in_title = 1
+        WHERE LOWER(pdf_uri) LIKE '%accessible%'
+    """)
+
+    updated_count = cursor.rowcount
+    print(f"Marked {updated_count} PDFs with 'accessible' in title as passed.")
+
+    conn.commit()
+    conn.close()
 
 
 
