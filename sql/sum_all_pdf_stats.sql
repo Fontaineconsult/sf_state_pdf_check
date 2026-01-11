@@ -8,6 +8,8 @@ WITH pdf_stats AS (
                     WHEN drupal_pdf_files.pdf_is_archived = 1 THEN 0
                     WHEN pdf_report.tagged = 0 THEN 1
                     WHEN pdf_report.pdf_text_type = 'Image Only' THEN 1
+                    WHEN pdf_report.approved_pdf_exporter = 1 THEN 0
+                    WHEN drupal_pdf_files.passed_contains_accessible_in_title = 1 THEN 0
                     WHEN ROUND(pdf_report.failed_checks * 1.0 / NULLIF(pdf_report.page_count, 0)) > 20 THEN 1
                     WHEN pdf_report.has_form = 1
                         AND ROUND(pdf_report.failed_checks * 1.0 / NULLIF(pdf_report.page_count, 0)) > 3 THEN 1
