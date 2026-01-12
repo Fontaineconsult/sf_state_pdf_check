@@ -275,7 +275,7 @@
             <ul class="stats-list">
                 <li><strong>Total PDF Instances*:</strong> {{ stats.total_pdf_instances }}</li>
                 <li><strong>Total Unique PDFs:</strong> {{ stats.total_unique_pdfs }}</li>
-                <li><strong>PDFs that need to be made accessible:</strong> {{ stats.total_high_priority }}</li>
+                <li><strong>PDFs that need to be made accessible or archived:</strong> {{ stats.total_high_priority }}</li>
                 <li><strong>Total Archived PDFs:</strong> {{ stats.total_archived_pdfs }}</li>
             </ul>
         </div>
@@ -316,7 +316,7 @@
         {% endif %}
         {% if details.pdf_reports %}
         <h3>PDF Accessibility Report for {{ site }}</h3>
-        <p><span class="status-fail">Red = Failing (Fix with Equidox)</span> | <span class="status-pass">Green = Passing (Don't do anything)</span> | <span class="status-archived">Orange = Archived</span> | Click Column Headers to Sort</p>
+        <p><span class="status-fail">Red = Failing (Fix with Equidox or archive)</span> | <span class="status-pass">Green = Passing (Don't do anything)</span> | <span class="status-archived">Orange = Archived</span> | Click Column Headers to Sort</p>
         <table class="pdf-table sortable" data-sortable>
             <caption>PDF Accessibility Report for {{ site }}</caption>
             <thead>
