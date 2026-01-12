@@ -190,8 +190,13 @@ def save_html(content, filename="output.html"):
         f.write(content)
     print(f"Rendered HTML saved to {filename}")
 
-def main():
-    """Main function to orchestrate fetching data, computing metrics, rendering, and saving."""
+def main(scan_month=None):
+    """Main function to orchestrate fetching data, computing metrics, rendering, and saving.
+
+    Args:
+        scan_month: Optional month string to use in the report. If not provided,
+                   falls back to settings.get('report.scan_month').
+    """
     all_sites = fetch_sites()
     site_details = generate_site_details()
 
@@ -206,6 +211,9 @@ def main():
     # Generate formatted timestamp
     generation_timestamp = datetime.now().strftime("%B %d, %Y")
 
+    # Use provided scan_month or fall back to settings
+    report_scan_month = scan_month if scan_month is not None else settings.get('report.scan_month')
+
     context = {
         "title": "Website Accessibility Report",
         "sites": all_sites,
@@ -213,7 +221,7 @@ def main():
         "metrics": metrics,
         "stats": stats,
         "site_pdf_counts": site_pdf_counts,
-        "scan_month": settings.get('report.scan_month'),
+        "scan_month": report_scan_month,
         "generation_timestamp": generation_timestamp
     }
 

@@ -74,9 +74,13 @@ def run_pdf_reports():
     return True
 
 
-def run_html_report():
-    """Generate HTML accessibility report."""
-    generate_html_report()
+def run_html_report(month=None):
+    """Generate HTML accessibility report.
+
+    Args:
+        month: Optional month string to use in the report (e.g., 'January 2025').
+    """
+    generate_html_report(scan_month=month)
     return True
 
 
@@ -143,6 +147,7 @@ def main():
     parser.add_argument('--spider', type=str, metavar='NAME', help='Run a single spider by name')
     parser.add_argument('--pdf-reports', action='store_true', help='Run PDF accessibility verification')
     parser.add_argument('--html-report', action='store_true', help='Generate HTML accessibility report')
+    parser.add_argument('--month', type=str, metavar='MONTH', help='Month to use in HTML report (e.g., "January 2025")')
     parser.add_argument('--cycle', action='store_true', help='Run one full cycle of all components')
     parser.add_argument('--loop', action='store_true', help='Run continuous loop of all components')
 
@@ -157,7 +162,7 @@ def main():
     elif args.pdf_reports:
         run_pdf_reports()
     elif args.html_report:
-        run_html_report()
+        run_html_report(month=args.month)
     elif args.cycle:
         run_full_cycle()
     elif args.loop:
