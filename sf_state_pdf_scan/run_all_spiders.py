@@ -8,7 +8,12 @@ import os
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
 from scrapy import spiderloader
-from twisted.internet import reactor, defer
+from twisted.internet import defer
+
+# Install the asyncio reactor BEFORE importing reactor
+from scrapy.utils.reactor import install_reactor
+install_reactor('twisted.internet.asyncioreactor.AsyncioSelectorReactor')
+from twisted.internet import reactor
 
 from set_env import get_project_path
 
