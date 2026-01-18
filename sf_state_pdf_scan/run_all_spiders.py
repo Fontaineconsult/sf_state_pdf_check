@@ -5,15 +5,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 import os
-from scrapy.crawler import CrawlerProcess
+from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
-from scrapy import spiderloader, signals
-from pydispatch import dispatcher
-
+from scrapy import spiderloader
+from twisted.internet import reactor, defer
 
 from set_env import get_project_path
 
 COMPLETED_FILE = get_project_path('completed_spiders')
+BATCH_SIZE = 4  # Number of spiders to run concurrently
 
 def load_completed():
     if not os.path.exists(COMPLETED_FILE):
@@ -27,11 +27,35 @@ def mark_completed(spider_name):
         f.write(spider_name + '\n')
 
 
+@defer.inlineCallbacks
+def crawl_batched(runner, spiders, batch_size):
+    """Run spiders in batches for controlled concurrency."""
+    for i in range(0, len(spiders), batch_size):
+        batch = spiders[i:i + batch_size]
+        batch_num = (i // batch_size) + 1
+        total_batches = (len(spiders) + batch_size - 1) // batch_size
+
+        print(f"\n=== Batch {batch_num}/{total_batches}: {batch} ===")
+
+        # Schedule all spiders in this batch
+        deferreds = []
+        for name in batch:
+            print(f"  Starting: {name}")
+            d = runner.crawl(name)
+            d.addCallback(lambda _, n=name: mark_completed(n))
+            deferreds.append(d)
+
+        # Wait for entire batch to complete
+        yield defer.DeferredList(deferreds)
+        print(f"=== Batch {batch_num} complete ===")
+
+    reactor.stop()
+
 
 def run_all_spiders():
 
     settings = get_project_settings()
-    process = CrawlerProcess(settings)
+    runner = CrawlerRunner(settings)
 
     loader = spiderloader.SpiderLoader.from_settings(settings)
     all_spiders = list(reversed(loader.list()))
@@ -42,22 +66,9 @@ def run_all_spiders():
         print("All spiders have already completed. Exiting.")
         exit()
 
-    def on_spider_closed(spider, reason):
-        if reason == 'finished':
-            mark_completed(spider.name)
-            print(f"Completed spider: {spider.name}")
-        else:
-            print(f"Spider '{spider.name}' closed (reason: {reason})")
-
-    dispatcher.connect(on_spider_closed, signal=signals.spider_closed)
-
-    # Schedule ALL spiders before starting the reactor
-    for name in to_run:
-        print(f"Scheduling spider: {name}")
-        process.crawl(name)
-
-    print(f"\nStarting {len(to_run)} spiders concurrently...")
-    process.start()
+    print(f"Running {len(to_run)} spiders in batches of {BATCH_SIZE}...")
+    crawl_batched(runner, to_run, BATCH_SIZE)
+    reactor.run()
 
 
 
