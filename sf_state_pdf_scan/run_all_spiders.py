@@ -42,28 +42,21 @@ def run_all_spiders():
         print("All spiders have already completed. Exiting.")
         exit()
 
-    spider_iter = iter(to_run)
-
-    def run_next():
-        try:
-            name = next(spider_iter)
-        except StopIteration:
-            return
-        print(f"Starting spider: {name}")
-        process.crawl(name)
-
     def on_spider_closed(spider, reason):
         if reason == 'finished':
-            # Immediately record the successful run
             mark_completed(spider.name)
-            print(f"Recorded completion of spider: {spider.name}")
+            print(f"Completed spider: {spider.name}")
         else:
             print(f"Spider '{spider.name}' closed (reason: {reason})")
-        run_next()
 
     dispatcher.connect(on_spider_closed, signal=signals.spider_closed)
 
-    run_next()
+    # Schedule ALL spiders before starting the reactor
+    for name in to_run:
+        print(f"Scheduling spider: {name}")
+        process.crawl(name)
+
+    print(f"\nStarting {len(to_run)} spiders concurrently...")
     process.start()
 
 
