@@ -285,22 +285,23 @@ def mark_pdfs_as_removed(site_folders):
         if domain_id is not None:
             pdf_locations = loop_through_files_in_folder(os.path.join(site_folders, folder))
 
-            if pdf_locations:
+            # If no scan file exists or is empty, skip this site to avoid marking all PDFs as removed
+            if not pdf_locations:
+                print(f"No scanned_pdfs.txt found or empty for {folder}, skipping removal check")
+                raw_pdf_scan_set.clear()
+                existing_pdfs_set.clear()
+                continue
 
-                for file in pdf_locations:
+            for file in pdf_locations:
+                file_split = file.split(' ', 1)  # Splits at the first space
+                file_url = file_split[0]
+                loc = file_split[1].split(" ")[0]
+                raw_pdf_scan_set.add((file_url, loc))
 
-                    file_split = file.split(' ', 1)  # Splits at the last space
-
-                    file_url = file_split[0]
-                    loc = file_split[1].split(" ")[0]
-                    raw_pdf_scan_set.add((file_url, loc))
-
-        missing_pdfs = existing_pdfs_set.difference(raw_pdf_scan_set)
-        if missing_pdfs:
-            for pdf_uri, parent_uri in missing_pdfs:
-
-                mark_pdf_as_removed(pdf_uri, parent_uri)
-
+            missing_pdfs = existing_pdfs_set.difference(raw_pdf_scan_set)
+            if missing_pdfs:
+                for pdf_uri, parent_uri in missing_pdfs:
+                    mark_pdf_as_removed(pdf_uri, parent_uri)
 
         raw_pdf_scan_set.clear()
         existing_pdfs_set.clear()
@@ -328,12 +329,16 @@ def mark_single_site_pdfs_as_removed(site_folder):
     raw_pdf_scan_set = set()
     pdf_locations = loop_through_files_in_folder(site_folder)
 
-    if pdf_locations:
-        for file in pdf_locations:
-            file_split = file.split(' ', 1)
-            file_url = file_split[0]
-            loc = file_split[1].split(" ")[0]
-            raw_pdf_scan_set.add((file_url, loc))
+    # If no scan file exists or is empty, skip removal to avoid marking all PDFs as removed
+    if not pdf_locations:
+        print(f"No scanned_pdfs.txt found or empty for {domain_name}, skipping removal check")
+        return
+
+    for file in pdf_locations:
+        file_split = file.split(' ', 1)
+        file_url = file_split[0]
+        loc = file_split[1].split(" ")[0]
+        raw_pdf_scan_set.add((file_url, loc))
 
     missing_pdfs = existing_pdfs_set.difference(raw_pdf_scan_set)
     if missing_pdfs:
