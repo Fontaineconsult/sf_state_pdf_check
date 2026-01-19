@@ -15,7 +15,7 @@ from data_export import get_pdf_reports_by_site_name, get_all_sites, write_data_
 
 from filters import check_for_node, is_high_priority
 from scan_refresh import refresh_status
-from tools import mark_pdfs_as_removed
+from tools import mark_pdfs_as_removed, mark_single_site_pdfs_as_removed
 from set_env import get_box_path
 from update_archived import update_archives
 
@@ -150,11 +150,31 @@ def create_all_pdf_reports():
     update_archives()
 
 
-def single_site_full_refresh():
-    single_site_pdf_scan(os.path.join(get_box_path('pdf_scans'), "access-sfsu-edu"))
-    refresh_status(site="access.sfsu.edu")
-    mark_pdfs_as_removed(pdf_sites_folder)
-    refresh_existing_pdf_reports(single_domain="access.sfsu.edu")
+def create_single_pdf_report(domain):
+    """
+    Run PDF accessibility scan and report for a single domain.
+
+    Parameters:
+        domain (str): The domain name (e.g., 'access.sfsu.edu')
+    """
+    folder_name = domain.replace(".", "-")
+    site_folder = os.path.join(get_box_path('pdf_scans'), folder_name)
+
+    print(f"Starting PDF scan for {domain}...")
+
+    # Scan PDFs from the spider output
+    single_site_pdf_scan(site_folder)
+
+    # Check for 404s
+    refresh_status(site=domain)
+
+    # Mark removed PDFs
+    mark_single_site_pdfs_as_removed(site_folder)
+
+    # Refresh existing reports
+    refresh_existing_pdf_reports(single_domain=domain)
+
+    print(f"Completed PDF report for {domain}")
 
 if __name__=="__main__":
     create_all_pdf_reports()

@@ -306,6 +306,43 @@ def mark_pdfs_as_removed(site_folders):
         existing_pdfs_set.clear()
 
 
+def mark_single_site_pdfs_as_removed(site_folder):
+    """
+    Compare the raw pdf scrape URLs and Parent with current PDFs for a single site
+    and mark current PDFs as removed if they are not in the raw scrape.
+
+    Parameters:
+        site_folder (str): Path to the single site folder to process
+    """
+    folder_name = os.path.basename(site_folder)
+    domain_name = folder_name.replace("-", ".")
+
+    domain_id = get_site_id_by_domain_name(folder_name)
+    if domain_id is None:
+        print(f"Could not find domain ID for {folder_name}")
+        return
+
+    site_pdfs = get_pdf_reports_by_site_name(domain_name)
+    existing_pdfs_set = set((pdf.pdf_uri, pdf.parent_uri) for pdf in site_pdfs)
+
+    raw_pdf_scan_set = set()
+    pdf_locations = loop_through_files_in_folder(site_folder)
+
+    if pdf_locations:
+        for file in pdf_locations:
+            file_split = file.split(' ', 1)
+            file_url = file_split[0]
+            loc = file_split[1].split(" ")[0]
+            raw_pdf_scan_set.add((file_url, loc))
+
+    missing_pdfs = existing_pdfs_set.difference(raw_pdf_scan_set)
+    if missing_pdfs:
+        for pdf_uri, parent_uri in missing_pdfs:
+            mark_pdf_as_removed(pdf_uri, parent_uri)
+
+    print(f"Marked {len(missing_pdfs)} PDFs as removed for {domain_name}")
+
+
 if __name__ == "__main__":
     mark_pdfs_as_removed(pdf_sites_folder)
 
