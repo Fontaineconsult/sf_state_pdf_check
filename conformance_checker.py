@@ -13,6 +13,7 @@ from data_import import add_pdf_file_to_database, get_site_id_by_domain_name, ch
 from pdf_priority import violation_counter, pdf_check, pdf_status
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import box_share_pattern_match, download_from_box
 from set_env import get_project_path, get_database_path
+from update_archived import is_archived
 
 
 temp_pdf_path = get_project_path('temp_pdf')
@@ -120,6 +121,8 @@ def scan_pdfs(directory, domain_id):
 
             if not report_exsits:
                 print("Report does not exist", file_url, loc)
+                box_filename = None  # Track Box filename for archive checking
+
                 if box_share_pattern_match(file_url):
                     print("Downloading File From Box")
                     box_download = download_from_box(file_url, loc, domain_id) # saved to temp_pdf_path
@@ -127,6 +130,10 @@ def scan_pdfs(directory, domain_id):
                     if not box_download[0]:
                         print("Box Download failed", file_url)
                         add_pdf_report_failure(file_url, loc, domain_id, box_download[1])
+                        continue
+
+                    # Capture Box filename for archive checking
+                    box_filename = box_download[2] if len(box_download) > 2 else None
                 else:
                     pdf_download = download_pdf_into_memory(file_url,loc, domain_id) # saved to temp_pdf_path
                     if pdf_download:
@@ -139,8 +146,9 @@ def scan_pdfs(directory, domain_id):
                 report = create_verapdf_report(file_url) # default looks to temp_pdf_path
 
                 if report["report"]["status"] == "Succeeded":
-
-                    add_pdf_file_to_database(file_url, loc, domain_id, report["report"]["report"])
+                    # Check if PDF should be marked as archived (using Box filename if available)
+                    pdf_is_archived = is_archived(file_url, loc, box_filename)
+                    add_pdf_file_to_database(file_url, loc, domain_id, report["report"]["report"], pdf_is_archived=pdf_is_archived)
                 else:
                     add_pdf_report_failure(file_url, loc, domain_id, report["report"]["report"])
 
@@ -167,12 +175,12 @@ def refresh_existing_pdf_reports(single_domain=None):
 
     def scan_pdfs_by_domain(domain):
 
-
-
         site_data = get_pdf_reports_by_site_name(domain)
         if site_data:
             for row in site_data:
                 print(row.pdf_uri)
+                box_filename = None  # Track Box filename for archive checking
+
                 if box_share_pattern_match(row.pdf_uri):
                     print("Downloading File From Box")
                     box_download = download_from_box(row.pdf_uri, 'None', "None")
@@ -180,7 +188,10 @@ def refresh_existing_pdf_reports(single_domain=None):
                     if not box_download[0]:
                         print("Box Download failed", row.pdf_uri)
                         add_pdf_report_failure(row.pdf_uri, row.parent_uri, row.drupal_site_id, box_download[1])
+                        continue
 
+                    # Capture Box filename for archive checking
+                    box_filename = box_download[2] if len(box_download) > 2 else None
                 else:
                     pdf_download = download_pdf_into_memory(row.pdf_uri, row.parent_uri, row.drupal_site_id)
                     if pdf_download:
@@ -193,7 +204,9 @@ def refresh_existing_pdf_reports(single_domain=None):
 
                 if report["report"]["status"] == "Succeeded":
                     print("Add report to DB")
-                    add_pdf_file_to_database(row.pdf_uri, row.parent_uri, row.drupal_site_id, report["report"]["report"], overwrite=True)
+                    # Check if PDF should be marked as archived (using Box filename if available)
+                    pdf_is_archived = is_archived(row.pdf_uri, row.parent_uri, box_filename)
+                    add_pdf_file_to_database(row.pdf_uri, row.parent_uri, row.drupal_site_id, report["report"]["report"], overwrite=True, pdf_is_archived=pdf_is_archived)
                 else:
                     add_pdf_report_failure(row.pdf_uri, row.parent_uri, row.drupal_site_id, report["report"]["report"])
 

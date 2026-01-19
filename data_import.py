@@ -190,7 +190,7 @@ def get_site_id_from_domain_name(domain_name):
 
 import sqlite3
 
-def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict, overwrite=False):
+def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict, overwrite=False, pdf_is_archived=False):
     # connect
     conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
@@ -293,12 +293,14 @@ def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict
         if overwrite:
             cursor.execute("""
                            UPDATE drupal_pdf_files
-                           SET drupal_site_id = ?
+                           SET drupal_site_id = ?,
+                               pdf_is_archived = ?
                            WHERE pdf_uri       = ?
                              AND parent_uri    = ?
                              AND file_hash     = ?
                            """, (
                                drupal_site_id,
+                               pdf_is_archived,
                                pdf_uri,
                                parent_uri,
                                file_hash
@@ -312,13 +314,15 @@ def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict
                            pdf_uri,
                            parent_uri,
                            drupal_site_id,
-                           file_hash
-                       ) VALUES (?,?,?,?)
+                           file_hash,
+                           pdf_is_archived
+                       ) VALUES (?,?,?,?,?)
                        """, (
                            pdf_uri,
                            parent_uri,
                            drupal_site_id,
-                           file_hash
+                           file_hash,
+                           pdf_is_archived
                        ))
         conn.commit()
 

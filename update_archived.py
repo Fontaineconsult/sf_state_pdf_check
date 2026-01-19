@@ -8,13 +8,14 @@ from urllib.parse import urljoin
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import get_box_contents
 
 
-def is_archived(pdf_uri, parent_uri):
+def is_archived(pdf_uri, parent_uri, box_filename=None):
     """
-    Check if a PDF should be marked as archived based on URL patterns.
+    Check if a PDF should be marked as archived based on URL patterns and filename.
 
     Args:
         pdf_uri: The URL to the PDF file
         parent_uri: The URL of the page hosting the PDF
+        box_filename: Optional filename from Box (e.g., "Fall-2020-Archive.pdf")
 
     Returns:
         True if the PDF should be marked as archived, False otherwise
@@ -106,6 +107,26 @@ def is_archived(pdf_uri, parent_uri):
         filename_no_ext = filename.rsplit('.', 1)[0] if '.' in filename else filename
         for suffix in ARCHIVE_SUFFIXES:
             if filename_no_ext.endswith(suffix):
+                return True
+
+    # 5. Check Box filename if provided (for Box share links where URL doesn't contain filename)
+    if box_filename:
+        box_filename_lower = box_filename.lower()
+        box_filename_no_ext = box_filename_lower.rsplit('.', 1)[0] if '.' in box_filename_lower else box_filename_lower
+
+        # Check keywords in Box filename
+        for keyword in ARCHIVE_KEYWORDS:
+            if keyword in box_filename_lower:
+                return True
+
+        # Check prefixes in Box filename
+        for prefix in ARCHIVE_PREFIXES:
+            if box_filename_lower.startswith(prefix):
+                return True
+
+        # Check suffixes in Box filename (without extension)
+        for suffix in ARCHIVE_SUFFIXES:
+            if box_filename_no_ext.endswith(suffix):
                 return True
 
     # If no archive patterns found, return False

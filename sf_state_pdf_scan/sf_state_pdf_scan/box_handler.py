@@ -69,11 +69,12 @@ def download_from_box(box_link, loc=None, domain_id=None, head=False):
         head (bool): If True, simply returns the direct download URL without downloading.
 
     Returns:
-        tuple: (True, download_url or empty string) on success, (False, error_message) on failure.
+        tuple: (True, "", filename) on success, (False, error_message, None) on failure.
+        If head=True, returns just the download_url string.
     """
     if not box_share_pattern_match(box_link):
         print("Not a valid box share link")
-        return False, "Not a valid box share link"
+        return False, "Not a valid box share link", None
 
     direct_download_url = "https://sfsu.app.box.com/public/static/{share_hash}.{extension}"
     share_hash = box_link.split("/")[-1]
@@ -81,10 +82,11 @@ def download_from_box(box_link, loc=None, domain_id=None, head=False):
     box_contents = get_box_contents(box_link)
     print(f"Box contents: {box_contents} for link: {box_link}")
     if box_contents is None:
-        return False, ""
+        return False, "", None
     if box_contents[0]:
         print("Found PDF")
         download_url = direct_download_url.format(share_hash=share_hash, extension="pdf")
+        box_filename = box_contents[2] if len(box_contents) > 2 else None
 
         if head:
             print("Head flag is True. Returning the download link without downloading.")
@@ -97,10 +99,10 @@ def download_from_box(box_link, loc=None, domain_id=None, head=False):
             with open(temp_pdf_path, "wb") as f:
                 f.write(file_response.content)
             print(f"Downloaded PDF saved to: {temp_pdf_path}")
-            return True, ""
+            return True, "", box_filename
     else:
         print("Box contents not found or error occurred.")
-        return False, box_contents[1]
+        return False, box_contents[1], None
 
 def box_share_pattern_match(url):
     # Pattern to match the specific domain and extract the hash.
