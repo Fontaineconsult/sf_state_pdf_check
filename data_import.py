@@ -421,21 +421,24 @@ def truncate_reports_table():
 
 def mark_pdf_as_removed(pdf_uri, parent_uri):
     """
-    Marks a PDF as removed in the database by setting its status to 'removed'.
+    Marks ALL matching PDFs as removed in the database by setting removed = 1.
+    Updates all records with matching (pdf_uri, parent_uri), regardless of file_hash.
     """
     conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
 
-    # Get the PDF file ID
-    pdf_file = cursor.execute("SELECT id FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ?", (pdf_uri, parent_uri)).fetchone()
+    # Update ALL records matching (pdf_uri, parent_uri) - handles duplicates with different hashes
+    cursor.execute(
+        "UPDATE drupal_pdf_files SET removed = 1 WHERE pdf_uri = ? AND parent_uri = ?",
+        (pdf_uri, parent_uri)
+    )
+    rows_affected = cursor.rowcount
+    conn.commit()
 
-    if pdf_file:
-        pdf_file_id = pdf_file[0]
-        # Update the status of the PDF file to 'removed'
-        cursor.execute("UPDATE drupal_pdf_files SET removed = 1 WHERE id = ?", (pdf_file_id,))
-        conn.commit()
-    else:
+    if rows_affected == 0:
         print(f"No PDF found with URI: {pdf_uri} and Parent URI: {parent_uri}")
+    elif rows_affected > 1:
+        print(f"Marked {rows_affected} duplicate records as removed for: {pdf_uri}")
 
     conn.close()
 
