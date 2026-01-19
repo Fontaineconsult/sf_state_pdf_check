@@ -408,7 +408,7 @@ from datetime import datetime
 spider_template = """
 # -*- coding: utf-8 -*-
 import os
-    
+
 import scrapy
 import re
 from scrapy.linkextractors import LinkExtractor
@@ -417,12 +417,13 @@ from scrapy import signals
 from datetime import datetime
 
 from ..box_handler import get_box_contents
+from set_env import get_box_path
 
 
 class {class_name}(scrapy.Spider):
     name = '{name}'
     start_urls = ['https://{site_url}']
-    output_folder = r'{box_base_path}\\{save_folder}'
+    save_folder = '{save_folder}'
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -432,6 +433,7 @@ class {class_name}(scrapy.Spider):
 
     def __init__(self):
         super().__init__()
+        self.output_folder = os.path.join(get_box_path('pdf_scans'), self.save_folder)
         self.matched_links = []  # Store matched links, if needed
         self.pdf_links = []      # Store PDF links as tuples (pdf_url, referrer_url)
         self.failed_box_links = []  # Store Box links that failed to resolve
@@ -579,8 +581,7 @@ def generate_spiders():
             name=f"{site_name_cleaned_for_name.lower().replace(' ', '_')}_spider",
             site_url=site,
             spider_name=site_name_cleaned_for_name.lower(),  # extra arg, not used in template, but no harm
-            save_folder=save_folder,
-            box_base_path=get_box_path('pdf_scans')
+            save_folder=save_folder
         )
 
         file_path = os.path.join(output_dir, f"{site_name_cleaned_for_file_title.lower()}_spider.py")
