@@ -145,9 +145,10 @@ def create_all_pdf_reports():
     # compare the pdfs in the folder to the database and mark as removed if not in the folder
     mark_pdfs_as_removed(pdf_sites_folder)
     # refresh_existing_pdf_reports
+    update_archives()
     refresh_existing_pdf_reports()
     # update archive status
-    update_archives()
+
 
 
 def create_single_pdf_report(domain):
