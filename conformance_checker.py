@@ -17,6 +17,38 @@ from update_archived import is_archived
 
 
 temp_pdf_path = get_project_path('temp_pdf')
+COMPLETED_CONFORMANCE_FILE = get_project_path('completed_conformance')
+
+
+def load_completed_conformance():
+    """Load the set of completed PDF scans from tracking file."""
+    if not os.path.exists(COMPLETED_CONFORMANCE_FILE):
+        return set()
+    with open(COMPLETED_CONFORMANCE_FILE, encoding='utf-8') as f:
+        return {line.strip() for line in f if line.strip()}
+
+
+def mark_conformance_completed(pdf_uri, parent_uri):
+    """Mark a PDF as scanned by appending to tracking file."""
+    # Ensure parent directory exists
+    os.makedirs(os.path.dirname(COMPLETED_CONFORMANCE_FILE), exist_ok=True)
+    key = f"{pdf_uri} {parent_uri}"
+    with open(COMPLETED_CONFORMANCE_FILE, 'a', encoding='utf-8') as f:
+        f.write(key + '\n')
+
+
+def is_conformance_completed(pdf_uri, parent_uri, completed_set):
+    """Check if a PDF has already been scanned in this session."""
+    key = f"{pdf_uri} {parent_uri}"
+    return key in completed_set
+
+
+def get_conformance_progress():
+    """Get the count of completed conformance scans."""
+    completed = load_completed_conformance()
+    return len(completed)
+
+
 temp_profile_path = get_project_path('temp_profile')
 
 def download_pdf_into_memory(url, loc, domain_id, timeout=30, allow_insecure_retry=True):
@@ -78,7 +110,7 @@ def loop_through_files_in_folder(folder_path):
     return None  # Return None if the file does not exist
 
 
-def scan_pdfs(directory, domain_id):
+def scan_pdfs(directory, domain_id, completed_set=None):
 
     """
     Scans PDF files listed in text files within a specified directory and generates accessibility reports.
@@ -86,22 +118,26 @@ def scan_pdfs(directory, domain_id):
     Parameters:
     directory (str): The path to the directory containing text files with PDF URLs and their locations.
     domain_id (int): The ID of the domain associated with the PDFs.
+    completed_set (set): Optional set of already completed scans for resume capability.
 
     Process:
     1. Loads the list of PDF URLs and their locations from text files in the specified directory.
     2. For each PDF URL and location:
-        a. Checks if an accessibility report already exists for the PDF.
-        b. If no report exists, downloads the PDF.
-        c. Generates an accessibility report using VeraPDF.
-        d. Adds the report to the database if successful, or logs a failure if not.
+        a. Checks if scan was already completed in this session (resume support).
+        b. Checks if an accessibility report already exists for the PDF.
+        c. If no report exists, downloads the PDF.
+        d. Generates an accessibility report using VeraPDF.
+        e. Adds the report to the database if successful, or logs a failure if not.
+        f. Marks the PDF as completed in the tracking file.
     """
 
     pdf_locations = loop_through_files_in_folder(directory)
 
     if pdf_locations:
+        total_pdfs = len(pdf_locations)
 
-        for file in pdf_locations:
-            print("DFD", file)
+        for idx, file in enumerate(pdf_locations, 1):
+            print(f"[{idx}/{total_pdfs}]", file)
 
             try:
                 file_split = file.split(' ', 1)  # Splits at the last space
@@ -110,6 +146,10 @@ def scan_pdfs(directory, domain_id):
                 loc = file_split[1].split(" ")[0]
                 print("checking", file_url, loc)
 
+                # Skip if already completed in this session
+                if completed_set and is_conformance_completed(file_url, loc, completed_set):
+                    print("Already scanned in this session, skipping", file_url)
+                    continue
 
                 # parsed_url = urlparse(file_url)
                 # encoded_path = quote(parsed_url.path)
@@ -130,6 +170,7 @@ def scan_pdfs(directory, domain_id):
                     if not box_download[0]:
                         print("Box Download failed", file_url)
                         add_pdf_report_failure(file_url, loc, domain_id, box_download[1])
+                        mark_conformance_completed(file_url, loc)  # Mark as completed even on failure
                         continue
 
                     # Capture Box filename for archive checking
@@ -141,6 +182,7 @@ def scan_pdfs(directory, domain_id):
                         with open(temp_pdf_path, "wb") as f:
                             f.write(pdf_download)
                     else:
+                        mark_conformance_completed(file_url, loc)  # Mark as completed even on failure
                         continue
 
                 report = create_verapdf_report(file_url) # default looks to temp_pdf_path
@@ -152,8 +194,12 @@ def scan_pdfs(directory, domain_id):
                 else:
                     add_pdf_report_failure(file_url, loc, domain_id, report["report"]["report"])
 
+                # Mark as completed after processing
+                mark_conformance_completed(file_url, loc)
+
             else:
                 print("Report already exists", file_url)
+                mark_conformance_completed(file_url, loc)  # Mark as completed
                 continue
 
 
@@ -238,16 +284,21 @@ def full_pdf_scan(site_folders):
     site_folders (str): The path to the directory containing subdirectories to be scanned.
 
     Process:
-    1. Iterates over each folder (subdirectory) within the `site_folders` directory.
-    2. Retrieves the domain ID for each folder by calling `get_site_id_by_domain_name`.
-    3. If a valid domain ID is found, calls the `scan_pdfs` function, passing the path to the current folder and the domain ID as arguments.
+    1. Loads completed scans from tracking file for resume capability.
+    2. Iterates over each folder (subdirectory) within the `site_folders` directory.
+    3. Retrieves the domain ID for each folder by calling `get_site_id_by_domain_name`.
+    4. If a valid domain ID is found, calls the `scan_pdfs` function, passing the path to the current folder and the domain ID as arguments.
     """
+    # Load completed scans for resume capability
+    completed_set = load_completed_conformance()
+    print(f"Loaded {len(completed_set)} previously completed scans")
+
     for folder in os.listdir(site_folders):
 
         domain_id = get_site_id_by_domain_name(folder)
         print(folder, domain_id, os.path.join(site_folders, folder))
         if domain_id is not None:
-            scan_pdfs(os.path.join(site_folders, folder), domain_id)
+            scan_pdfs(os.path.join(site_folders, folder), domain_id, completed_set)
 
 
 
@@ -259,16 +310,18 @@ def single_site_pdf_scan(site_folder):
     site_folder (str): The path to the subdirectory to be scanned.
 
     Process:
-    1. Retrieves the domain ID for the folder by calling `get_site_id_by_domain_name`.
-    2. If a valid domain ID is found, calls the `scan_pdfs` function, passing the path to the folder and the domain ID as arguments.
+    1. Loads completed scans from tracking file for resume capability.
+    2. Retrieves the domain ID for the folder by calling `get_site_id_by_domain_name`.
+    3. If a valid domain ID is found, calls the `scan_pdfs` function, passing the path to the folder and the domain ID as arguments.
     """
-    # get last folder in site folders
-
+    # Load completed scans for resume capability
+    completed_set = load_completed_conformance()
+    print(f"Loaded {len(completed_set)} previously completed scans")
 
     domain_id = get_site_id_by_domain_name(os.path.basename(site_folder))
 
     if domain_id is not None:
-        scan_pdfs(site_folder, domain_id)
+        scan_pdfs(site_folder, domain_id, completed_set)
 
 #
 if __name__=='__main__':

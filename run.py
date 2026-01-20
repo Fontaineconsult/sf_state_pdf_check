@@ -18,6 +18,7 @@ from sf_state_pdf_scan.run_spider_by_name import run_spider_by_name
 
 # Import PDF report function
 from master_functions import create_all_pdf_reports, create_single_pdf_report
+from set_env import get_project_path
 
 # Import HTML report function
 from html_report import main as generate_html_report
@@ -26,6 +27,7 @@ from html_report import main as generate_html_report
 from sites import generate_spiders
 
 COMPLETED_SPIDERS_FILE = 'sf_state_pdf_scan/sf_state_pdf_scan/completed_spiders.txt'
+COMPLETED_CONFORMANCE_FILE = get_project_path('completed_conformance')
 
 
 def clear_completed_spiders():
@@ -34,6 +36,22 @@ def clear_completed_spiders():
     if completed_file.exists():
         completed_file.write_text('')
         print(f"Cleared completed spiders file: {completed_file}")
+
+
+def clear_completed_conformance():
+    """Clear the completed conformance scans file."""
+    if COMPLETED_CONFORMANCE_FILE and os.path.exists(COMPLETED_CONFORMANCE_FILE):
+        with open(COMPLETED_CONFORMANCE_FILE, 'w') as f:
+            f.write('')
+        print(f"Cleared completed conformance file: {COMPLETED_CONFORMANCE_FILE}")
+
+
+def get_conformance_progress():
+    """Get the count of completed conformance scans."""
+    if COMPLETED_CONFORMANCE_FILE and os.path.exists(COMPLETED_CONFORMANCE_FILE):
+        with open(COMPLETED_CONFORMANCE_FILE, 'r', encoding='utf-8') as f:
+            return sum(1 for line in f if line.strip())
+    return 0
 
 
 def run_spiders():
@@ -71,6 +89,7 @@ def run_single_spider(spider_name):
 def run_pdf_reports():
     """Run PDF accessibility verification."""
     create_all_pdf_reports()
+    clear_completed_conformance()  # Clear tracking after successful run
     return True
 
 
@@ -157,6 +176,8 @@ def main():
     parser.add_argument('--month', type=str, metavar='MONTH', help='Month to use in HTML report (e.g., "January 2025")')
     parser.add_argument('--cycle', action='store_true', help='Run one full cycle of all components')
     parser.add_argument('--loop', action='store_true', help='Run continuous loop of all components')
+    parser.add_argument('--clear-conformance', action='store_true', help='Clear the completed conformance scans tracking file')
+    parser.add_argument('--conformance-progress', action='store_true', help='Show the number of completed conformance scans')
 
     args = parser.parse_args()
 
@@ -176,6 +197,11 @@ def main():
         run_full_cycle()
     elif args.loop:
         run_loop()
+    elif args.clear_conformance:
+        clear_completed_conformance()
+    elif args.conformance_progress:
+        count = get_conformance_progress()
+        print(f"Completed conformance scans: {count}")
     else:
         parser.print_help()
 
