@@ -191,8 +191,8 @@ def get_site_id_from_domain_name(domain_name):
 import sqlite3
 
 def add_pdf_file_to_database(pdf_uri, parent_uri, drupal_site_id, violation_dict, overwrite=False, pdf_is_archived=False):
-    # connect
-    conn = sqlite3.connect(get_database_path())
+    # connect with timeout to avoid lock issues
+    conn = sqlite3.connect(get_database_path(), timeout=30)
     cursor = conn.cursor()
 
     # unpack violation_dict safely
@@ -368,7 +368,7 @@ def get_site_id_by_domain_name(domain_name):
 def check_if_pdf_report_exists(pdf_uri, parent_uri):
 
     # first check if a pdf exists with the pdf_uri and parent_uri
-    conn = sqlite3.connect(get_database_path())
+    conn = sqlite3.connect(get_database_path(), timeout=30)
     cursor = conn.cursor()
     pdf_file = cursor.execute("SELECT * FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ?", (pdf_uri, parent_uri)).fetchone()
 

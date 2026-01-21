@@ -276,6 +276,16 @@ def refresh_existing_pdf_reports(single_domain=None):
 
 
 
+def enable_wal_mode():
+    """Enable SQLite WAL mode for better concurrency."""
+    conn = sqlite3.connect(get_database_path())
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=30000")
+    conn.commit()
+    conn.close()
+    print("SQLite WAL mode enabled")
+
+
 def full_pdf_scan(site_folders):
     """
     Scans all subdirectories within the given directory for PDF files and generates accessibility reports.
@@ -284,11 +294,15 @@ def full_pdf_scan(site_folders):
     site_folders (str): The path to the directory containing subdirectories to be scanned.
 
     Process:
-    1. Loads completed scans from tracking file for resume capability.
-    2. Iterates over each folder (subdirectory) within the `site_folders` directory.
-    3. Retrieves the domain ID for each folder by calling `get_site_id_by_domain_name`.
-    4. If a valid domain ID is found, calls the `scan_pdfs` function, passing the path to the current folder and the domain ID as arguments.
+    1. Enables WAL mode for better database concurrency.
+    2. Loads completed scans from tracking file for resume capability.
+    3. Iterates over each folder (subdirectory) within the `site_folders` directory.
+    4. Retrieves the domain ID for each folder by calling `get_site_id_by_domain_name`.
+    5. If a valid domain ID is found, calls the `scan_pdfs` function, passing the path to the current folder and the domain ID as arguments.
     """
+    # Enable WAL mode for better concurrency
+    enable_wal_mode()
+
     # Load completed scans for resume capability
     completed_set = load_completed_conformance()
     print(f"Loaded {len(completed_set)} previously completed scans")
