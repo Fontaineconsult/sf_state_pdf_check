@@ -201,6 +201,10 @@ def get_pdfs_after_archive_sections(page_url):
 
         # For each archive marker, collect PDFs until next section
         for marker in archive_markers:
+            # Check if this is an "Archived Content:" notice (page-wide archive)
+            marker_text = marker.text.lower() if marker.text else ""
+            is_page_wide_archive = 'archived content:' in marker_text
+
             # Get heading level if it's a heading
             if marker.name.startswith('h'):
                 level = int(marker.name[1])
@@ -209,11 +213,23 @@ def get_pdfs_after_archive_sections(page_url):
 
             # Find all elements after this marker
             for element in marker.find_all_next():
-                # Stop at next heading of same or higher level
+                # For "Archived Content:" notices, only stop at another archive notice
+                # For regular archive sections, stop at same or higher level heading
                 if element.name and element.name.startswith('h'):
-                    element_level = int(element.name[1])
-                    if element_level <= level:
+                    element_text = element.text.lower() if element.text else ""
+
+                    # Always stop at another "Archived Content:" notice
+                    if 'archived content:' in element_text:
                         break
+
+                    # For page-wide archives, don't stop at content headings
+                    if is_page_wide_archive:
+                        pass  # Continue past content headings
+                    else:
+                        # Original logic: stop at same or higher level heading
+                        element_level = int(element.name[1])
+                        if element_level <= level:
+                            break
 
                 # Check for links
                 if element.name == 'a':
