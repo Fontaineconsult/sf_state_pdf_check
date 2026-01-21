@@ -26,6 +26,9 @@ from html_report import main as generate_html_report
 # Import spider generation function
 from sites import generate_spiders
 
+# Import archive update function
+from update_archived import update_archives, update_archives_for_domain
+
 COMPLETED_SPIDERS_FILE = 'sf_state_pdf_scan/sf_state_pdf_scan/completed_spiders.txt'
 COMPLETED_CONFORMANCE_FILE = get_project_path('completed_conformance')
 
@@ -115,6 +118,20 @@ def run_generate_spiders():
     return True
 
 
+def run_update_archives():
+    """Update archived status for all PDFs in the database."""
+    print("\nUpdating archived status for PDFs...")
+    update_archives()
+    return True
+
+
+def run_update_archives_domain(domain_name):
+    """Update archived status for PDFs from a specific domain."""
+    print(f"\nUpdating archived status for domain: {domain_name}")
+    update_archives_for_domain(domain_name)
+    return True
+
+
 def run_full_cycle():
     """Run a complete cycle of all three components."""
     print("\n=== Starting Full Cycle ===")
@@ -178,6 +195,8 @@ def main():
     parser.add_argument('--loop', action='store_true', help='Run continuous loop of all components')
     parser.add_argument('--clear-conformance', action='store_true', help='Clear the completed conformance scans tracking file')
     parser.add_argument('--conformance-progress', action='store_true', help='Show the number of completed conformance scans')
+    parser.add_argument('--update-archives', action='store_true', help='Update archived status for all PDFs in the database')
+    parser.add_argument('--update-archive', type=str, metavar='DOMAIN', help='Update archived status for a single domain (e.g., retire.sfsu.edu)')
 
     args = parser.parse_args()
 
@@ -202,6 +221,10 @@ def main():
     elif args.conformance_progress:
         count = get_conformance_progress()
         print(f"Completed conformance scans: {count}")
+    elif args.update_archives:
+        run_update_archives()
+    elif args.update_archive:
+        run_update_archives_domain(args.update_archive)
     else:
         parser.print_help()
 
