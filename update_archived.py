@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import get_box_contents
+from set_env import get_database_path
 
 
 def is_archived(pdf_uri, parent_uri, box_filename=None):
@@ -303,7 +304,7 @@ def refresh_parent_urls_archived_status(parent_url=None):
                                     queries database for all parent URLs.
     """
     # Connect to database (needed for both single URL and multiple URLs)
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
 
     total_pdfs_marked = 0
@@ -412,7 +413,7 @@ def update_archives():
     Query all records from drupal_pdf_files and update pdf_is_archived field.
     """
     # Connect to database
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
 
     # First, reset all pdf_is_archived flags to 0
@@ -456,7 +457,7 @@ def update_archives_for_domain(domain_name):
         domain_name: The domain to filter by (e.g., 'retire.sfsu.edu')
     """
     # Connect to database
-    conn = sqlite3.connect('drupal_pdfs.db')
+    conn = sqlite3.connect(get_database_path())
     cursor = conn.cursor()
 
     # Reset pdf_is_archived flags only for this domain
