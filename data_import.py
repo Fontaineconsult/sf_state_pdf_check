@@ -387,27 +387,28 @@ def check_if_pdf_report_exists(pdf_uri, parent_uri):
 
 
 def add_pdf_report_failure(pdf_uri, parent_uri, site_id, error_message):
+        try:
+            conn = sqlite3.connect(get_database_path(), timeout=30)
+            cursor = conn.cursor()
 
-        conn = sqlite3.connect(get_database_path())
-        cursor = conn.cursor()
+            # get pdf_id from pdf table with pdf_uri and parent_uri
+            print(pdf_uri, parent_uri, site_id, error_message)
 
-        # get pdf_id from pdf table with pdf_uri and parent_uri
-        print(pdf_uri, parent_uri, site_id, error_message)
+            pdf_id = cursor.execute("SELECT * FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ?", (pdf_uri, parent_uri)).fetchone()
+            print(pdf_id)
+            if pdf_id:
+                pdf_id = pdf_id[0]
 
-        pdf_id = cursor.execute("SELECT * FROM drupal_pdf_files WHERE pdf_uri = ? AND parent_uri = ?", (pdf_uri, parent_uri)).fetchone()
-        print(pdf_id)
-        if pdf_id:
-            pdf_id = pdf_id[0]
-
-            # add record to failure table
-            cursor.execute("INSERT INTO failure (site_id, pdf_id, error_message) VALUES (?, ?, ?)", (site_id, pdf_id, error_message))
-            conn.commit()
+                # add record to failure table
+                cursor.execute("INSERT INTO failure (site_id, pdf_id, error_message) VALUES (?, ?, ?)", (site_id, pdf_id, error_message))
+                conn.commit()
+            else:
+                cursor.execute("INSERT INTO failure (site_id, pdf_id, error_message) VALUES (?, ?, ?)", (site_id, pdf_uri, error_message))
+                conn.commit()
+                print("No PDF in system, added raw failure with URI")
             conn.close()
-        else:
-            cursor.execute("INSERT INTO failure (site_id, pdf_id, error_message) VALUES (?, ?, ?)", (site_id, pdf_uri, error_message))
-            conn.commit()
-            conn.close()
-            print("No PDF in system, added raw failure with URI")
+        except sqlite3.OperationalError as e:
+            print(f"Database error logging failure: {e}")
 
 
 def truncate_reports_table():
