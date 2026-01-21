@@ -404,10 +404,10 @@ def add_pdf_report_failure(pdf_uri, parent_uri, site_id, error_message):
             conn.commit()
             conn.close()
         else:
-            cursor.execute("INSERT INTO failure (site_id, pdf_uri, error_message) VALUES (?, ?, ?)", (site_id, pdf_uri, error_message))
+            cursor.execute("INSERT INTO failure (site_id, pdf_id, error_message) VALUES (?, ?, ?)", (site_id, pdf_uri, error_message))
             conn.commit()
             conn.close()
-            print("No PDF in system add raw failure")
+            print("No PDF in system, added raw failure with URI")
 
 
 def truncate_reports_table():
