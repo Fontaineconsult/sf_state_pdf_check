@@ -13,7 +13,7 @@ from openpyxl import load_workbook
 from conformance_checker import loop_through_files_in_folder
 from data_export import get_pdf_reports_by_site_name
 from data_import import get_site_id_by_domain_name, mark_pdf_as_removed
-from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import download_from_box, box_share_pattern_match
+from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import download_from_box, box_share_pattern_match, normalize_box_url
 from set_env import get_box_path, get_database_path
 
 
@@ -270,6 +270,7 @@ def mark_pdfs_with_accessible_in_title_as_passed():
 def mark_pdfs_as_removed(site_folders):
     """
     Compare the raw pdf scrape URLS and Parent with current PDFS and mark current PDFS as removed if they are not in the raw scrape.
+    Box URLs are normalized before comparison to handle sfsu.box.com vs sfsu.app.box.com variations.
     :return:
     """
     raw_pdf_scan_set = set()
@@ -280,7 +281,9 @@ def mark_pdfs_as_removed(site_folders):
 
         site_pdfs = get_pdf_reports_by_site_name(folder.replace("-", "."))
 
-        existing_pdfs_set = set((pdf.pdf_uri, pdf.parent_uri) for pdf in site_pdfs)
+        # Build existing set with normalized Box URLs, but keep original for marking
+        existing_pdfs_map = {(normalize_box_url(pdf.pdf_uri), pdf.parent_uri): (pdf.pdf_uri, pdf.parent_uri) for pdf in site_pdfs}
+        existing_pdfs_set = set(existing_pdfs_map.keys())
 
         if domain_id is not None:
             pdf_locations = loop_through_files_in_folder(os.path.join(site_folders, folder))
@@ -290,27 +293,33 @@ def mark_pdfs_as_removed(site_folders):
                 print(f"No scanned_pdfs.txt found or empty for {folder}, skipping removal check")
                 raw_pdf_scan_set.clear()
                 existing_pdfs_set.clear()
+                existing_pdfs_map.clear()
                 continue
 
             for file in pdf_locations:
                 file_split = file.split(' ', 1)  # Splits at the first space
                 file_url = file_split[0]
                 loc = file_split[1].split(" ")[0]
-                raw_pdf_scan_set.add((file_url, loc))
+                # Normalize Box URLs for comparison
+                raw_pdf_scan_set.add((normalize_box_url(file_url), loc))
 
             missing_pdfs = existing_pdfs_set.difference(raw_pdf_scan_set)
             if missing_pdfs:
-                for pdf_uri, parent_uri in missing_pdfs:
-                    mark_pdf_as_removed(pdf_uri, parent_uri)
+                for normalized_key in missing_pdfs:
+                    # Use original URL from map for marking
+                    original_pdf_uri, original_parent_uri = existing_pdfs_map[normalized_key]
+                    mark_pdf_as_removed(original_pdf_uri, original_parent_uri)
 
         raw_pdf_scan_set.clear()
         existing_pdfs_set.clear()
+        existing_pdfs_map.clear()
 
 
 def mark_single_site_pdfs_as_removed(site_folder):
     """
     Compare the raw pdf scrape URLs and Parent with current PDFs for a single site
     and mark current PDFs as removed if they are not in the raw scrape.
+    Box URLs are normalized before comparison to handle sfsu.box.com vs sfsu.app.box.com variations.
 
     Parameters:
         site_folder (str): Path to the single site folder to process
@@ -324,7 +333,9 @@ def mark_single_site_pdfs_as_removed(site_folder):
         return
 
     site_pdfs = get_pdf_reports_by_site_name(domain_name)
-    existing_pdfs_set = set((pdf.pdf_uri, pdf.parent_uri) for pdf in site_pdfs)
+    # Build existing set with normalized Box URLs, but keep original for marking
+    existing_pdfs_map = {(normalize_box_url(pdf.pdf_uri), pdf.parent_uri): (pdf.pdf_uri, pdf.parent_uri) for pdf in site_pdfs}
+    existing_pdfs_set = set(existing_pdfs_map.keys())
 
     raw_pdf_scan_set = set()
     pdf_locations = loop_through_files_in_folder(site_folder)
@@ -338,12 +349,15 @@ def mark_single_site_pdfs_as_removed(site_folder):
         file_split = file.split(' ', 1)
         file_url = file_split[0]
         loc = file_split[1].split(" ")[0]
-        raw_pdf_scan_set.add((file_url, loc))
+        # Normalize Box URLs for comparison
+        raw_pdf_scan_set.add((normalize_box_url(file_url), loc))
 
     missing_pdfs = existing_pdfs_set.difference(raw_pdf_scan_set)
     if missing_pdfs:
-        for pdf_uri, parent_uri in missing_pdfs:
-            mark_pdf_as_removed(pdf_uri, parent_uri)
+        for normalized_key in missing_pdfs:
+            # Use original URL from map for marking
+            original_pdf_uri, original_parent_uri = existing_pdfs_map[normalized_key]
+            mark_pdf_as_removed(original_pdf_uri, original_parent_uri)
 
     print(f"Marked {len(missing_pdfs)} PDFs as removed for {domain_name}")
 

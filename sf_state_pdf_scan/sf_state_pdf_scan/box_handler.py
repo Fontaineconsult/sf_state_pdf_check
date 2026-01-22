@@ -111,4 +111,21 @@ def box_share_pattern_match(url):
     return True if match else False
 
 
+def normalize_box_url(url):
+    """
+    Normalize Box URLs to a canonical form for comparison.
+    Converts sfsu.app.box.com and sfsu.box.com to the same format.
+
+    Returns the original URL if not a Box link.
+    """
+    if not box_share_pattern_match(url):
+        return url
+
+    # Extract the share hash
+    share_hash = url.split("/s/")[-1].split("/")[0].split("?")[0]
+
+    # Return canonical form
+    return f"https://sfsu.box.com/s/{share_hash}"
+
+
 
