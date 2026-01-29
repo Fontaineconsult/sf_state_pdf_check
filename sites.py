@@ -591,3 +591,66 @@ def generate_spiders():
         print(f"Generated spider for {site}: {file_path}")
 
     print(f"Failed sites: {failed}")
+
+
+def generate_single_spider(domain_name):
+    """
+    Generate a spider file for a single site.
+
+    Returns: (success, message)
+    """
+    try:
+        response = requests.get(f"https://{domain_name}", timeout=10)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        return (False, f"Error connecting to {domain_name}: {e}")
+
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    # Extract site name from HTML
+    site_name_tag = soup.find('span', class_='site-name')
+    if site_name_tag and site_name_tag.find('a'):
+        base_site_name = site_name_tag.find('a').text.strip()
+    else:
+        base_site_name = 'SiteNameNotFound'
+
+    # Check for existing spiders with same name
+    existing_files = os.listdir(output_dir) if os.path.exists(output_dir) else []
+    base_pattern = ''.join(
+        e if e.isalnum() or e.isspace() else ''
+        for e in base_site_name
+    ).replace(' ', '_').lower()
+
+    count = sum(1 for f in existing_files if f.startswith(base_pattern) and f.endswith('_spider.py'))
+    unique_site_name = f"{base_site_name}{count}" if count > 0 else base_site_name
+
+    # Clean names (same logic as generate_spiders)
+    site_name_cleaned_for_class = ''.join(
+        word.capitalize()
+        for word in ''.join(e if e.isalnum() or e.isspace() else ' ' for e in unique_site_name).split()
+    )
+    site_name_cleaned_for_name = ''.join(
+        e if e.isalnum() or e.isspace() else '' for e in unique_site_name
+    )
+    site_name_cleaned_for_file_title = site_name_cleaned_for_name.replace(' ', '_')
+
+    save_folder = domain_name.replace('.', '-').lower()
+    class_name = f"{site_name_cleaned_for_class}Spider"
+
+    spider_code = spider_template.format(
+        class_name=class_name,
+        name=f"{site_name_cleaned_for_name.lower().replace(' ', '_')}_spider",
+        site_url=domain_name,
+        spider_name=site_name_cleaned_for_name.lower(),
+        save_folder=save_folder
+    )
+
+    file_path = os.path.join(output_dir, f"{site_name_cleaned_for_file_title.lower()}_spider.py")
+
+    if os.path.exists(file_path):
+        return (False, f"Spider file already exists: {file_path}")
+
+    with open(file_path, 'w', encoding="utf-8") as file:
+        file.write(spider_code)
+
+    return (True, f"Generated spider: {file_path}")

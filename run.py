@@ -24,7 +24,10 @@ from set_env import get_project_path
 from html_report import main as generate_html_report
 
 # Import spider generation function
-from sites import generate_spiders
+from sites import generate_spiders, generate_single_spider
+
+# Import single site add function
+from data_import import add_single_site
 
 # Import archive update function
 from update_archived import update_archives, update_archives_for_domain
@@ -156,6 +159,39 @@ def run_check_404_box_only():
     return True
 
 
+def run_add_site(domain_name, box_folder=None):
+    """Add a new site: database record and spider."""
+    print(f"\n=== Adding Site: {domain_name} ===\n")
+
+    # Validate domain format
+    domain_name = domain_name.strip().lower()
+    if domain_name.startswith('http'):
+        domain_name = domain_name.split('://')[-1].rstrip('/')
+    if domain_name.startswith('www.'):
+        domain_name = domain_name[4:]
+
+    if not domain_name.endswith('.sfsu.edu'):
+        print(f"Error: Domain must be an sfsu.edu subdomain (got: {domain_name})")
+        return False
+
+    # Step 1: Add to database
+    print("Step 1/2: Adding to database...")
+    db_success, db_message, site_id = add_single_site(domain_name, box_folder)
+    print(f"  {db_message}")
+    if box_folder:
+        print(f"  Box folder: {box_folder}")
+    if not db_success and "already exists" not in db_message:
+        return False
+
+    # Step 2: Generate spider
+    print("\nStep 2/2: Generating spider...")
+    spider_success, spider_message = generate_single_spider(domain_name)
+    print(f"  {spider_message}")
+
+    print(f"\n=== Site '{domain_name}' setup complete! ===")
+    return True
+
+
 def run_full_cycle():
     """Run a complete cycle of all three components."""
     print("\n=== Starting Full Cycle ===")
@@ -224,6 +260,10 @@ def main():
     parser.add_argument('--check-404', action='store_true', help='Check 404 status for all PDFs and parent URLs')
     parser.add_argument('--check-404-site', type=str, metavar='DOMAIN', help='Check 404 status for a single domain (e.g., access.sfsu.edu)')
     parser.add_argument('--check-404-box', action='store_true', help='Check 404 status for Box links only')
+    parser.add_argument('--add-site', type=str, metavar='DOMAIN',
+                        help='Add a new site (e.g., newdomain.sfsu.edu)')
+    parser.add_argument('--box-folder', type=str, metavar='URL',
+                        help='Box folder URL for --add-site (e.g., https://sfsu.box.com/s/xxxxx)')
 
     args = parser.parse_args()
 
@@ -258,6 +298,8 @@ def main():
         run_check_404_site(args.check_404_site)
     elif args.check_404_box:
         run_check_404_box_only()
+    elif args.add_site:
+        run_add_site(args.add_site, box_folder=args.box_folder)
     else:
         parser.print_help()
 

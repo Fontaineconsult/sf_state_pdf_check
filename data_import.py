@@ -363,6 +363,41 @@ def get_site_id_by_domain_name(domain_name):
     return site_id[0] if site_id else None
 
 
+def add_single_site(domain_name, box_folder=None):
+    """
+    Add a single site to the drupal_site table.
+
+    Args:
+        domain_name: The domain name (e.g., 'newsite.sfsu.edu')
+        box_folder: Optional Box folder URL (e.g., 'https://sfsu.box.com/s/xxxxx')
+
+    Returns: (success, message, site_id)
+    """
+    conn = sqlite3.connect(get_database_path())
+    cursor = conn.cursor()
+
+    # Check if site already exists
+    existing = cursor.execute(
+        "SELECT id FROM drupal_site WHERE domain_name = ?",
+        (domain_name,)
+    ).fetchone()
+
+    if existing:
+        conn.close()
+        return (False, f"Site '{domain_name}' already exists with ID {existing[0]}", existing[0])
+
+    # Insert the new site
+    cursor.execute(
+        "INSERT INTO drupal_site (domain_name, box_folder) VALUES (?, ?)",
+        (domain_name, box_folder)
+    )
+    site_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+
+    return (True, f"Site '{domain_name}' added with ID {site_id}", site_id)
+
+
 
 
 def check_if_pdf_report_exists(pdf_uri, parent_uri):
