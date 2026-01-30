@@ -531,11 +531,14 @@ failed = []
 
 
 def generate_spiders():
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
 
     for site in all_sites:
         time.sleep(0.1)
         try:
-            response = requests.get("https://" + site)
+            response = requests.get("https://" + site, headers=headers, timeout=10)
         except (requests.exceptions.SSLError, requests.exceptions.ConnectionError):
             failed.append(site)
             continue
