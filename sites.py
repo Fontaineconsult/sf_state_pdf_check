@@ -425,6 +425,10 @@ class {class_name}(scrapy.Spider):
     start_urls = ['https://{site_url}']
     save_folder = '{save_folder}'
 
+    custom_settings = {{
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    }}
+
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
         spider = super({class_name}, cls).from_crawler(crawler, *args, **kwargs)
@@ -599,8 +603,11 @@ def generate_single_spider(domain_name):
 
     Returns: (success, message)
     """
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
     try:
-        response = requests.get(f"https://{domain_name}", timeout=10)
+        response = requests.get(f"https://{domain_name}", headers=headers, timeout=10)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         return (False, f"Error connecting to {domain_name}: {e}")
