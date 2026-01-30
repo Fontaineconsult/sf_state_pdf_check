@@ -10,6 +10,10 @@ import requests
 from urllib.parse import unquote
 from openpyxl import load_workbook
 
+DEFAULT_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+}
+
 from conformance_checker import loop_through_files_in_folder
 from data_export import get_pdf_reports_by_site_name
 from data_import import get_site_id_by_domain_name, mark_pdf_as_removed
@@ -155,7 +159,7 @@ def download_all_dprc_will_remediate_pdfs_by_site(site_name):
                 download_from_box(first_url, box_temp_folder)
             else:
                 print("Downloading file from URL…")
-                response = requests.get(first_url, stream=True)
+                response = requests.get(first_url, headers=DEFAULT_HEADERS, stream=True)
                 if response.status_code == 200:
                     raw_name = os.path.basename(first_url)
                     unescaped = html.unescape(raw_name)

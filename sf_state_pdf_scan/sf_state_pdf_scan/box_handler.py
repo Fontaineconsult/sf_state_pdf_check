@@ -8,15 +8,17 @@ import lxml
 from data_import import add_pdf_report_failure
 from set_env import get_project_path
 
+DEFAULT_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+}
+
 
 def get_box_contents(box_url):
-    page_request = requests.get(box_url)
+    page_request = requests.get(box_url, headers=DEFAULT_HEADERS)
     print("CHECKING", box_url)
     if not page_request.ok:
         # add_pdf_report_failure(box_url, parent_uri, domain_id, f"Couldn't download {page_request.status_code}")
         return False, "Can't Access PDF"
-
-    page_request = requests.get(box_url)
 
     if page_request:
         page_html = BeautifulSoup(page_request.content, features="lxml")
@@ -93,7 +95,7 @@ def download_from_box(box_link, loc=None, domain_id=None, head=False):
             return download_url
         else:
             print(f"Downloading PDF from: {download_url}")
-            file_response = requests.get(download_url, stream=True)
+            file_response = requests.get(download_url, headers=DEFAULT_HEADERS, stream=True)
             # Assuming 'loc' is the file path where we want to save the PDF.
 
             with open(temp_pdf_path, "wb") as f:

@@ -8,6 +8,10 @@ from urllib.parse import urljoin
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import get_box_contents
 from set_env import get_database_path
 
+DEFAULT_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+}
+
 
 def is_archived(pdf_uri, parent_uri, box_filename=None):
     """
@@ -146,7 +150,7 @@ def get_pdfs_after_archive_sections(page_url):
     """
     try:
         # Fetch the page
-        response = requests.get(page_url, timeout=30)
+        response = requests.get(page_url, headers=DEFAULT_HEADERS, timeout=30)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -548,7 +552,7 @@ def test_url(page_url, pdf_url=None):
 
     # Fetch and parse the page
     try:
-        response = requests.get(page_url, timeout=30)
+        response = requests.get(page_url, headers=DEFAULT_HEADERS, timeout=30)
         response.raise_for_status()
         soup = BeautifulSoup(response.content, 'html.parser')
 

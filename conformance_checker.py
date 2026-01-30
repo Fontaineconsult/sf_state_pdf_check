@@ -51,10 +51,14 @@ def get_conformance_progress():
 
 temp_profile_path = get_project_path('temp_profile')
 
+DEFAULT_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+}
+
 def download_pdf_into_memory(url, loc, domain_id, timeout=30, allow_insecure_retry=True):
     import urllib3
     try:
-        resp = requests.get(url, timeout=timeout)
+        resp = requests.get(url, headers=DEFAULT_HEADERS, timeout=timeout)
         resp.raise_for_status()
         return resp.content
     except requests.exceptions.SSLError as e:
@@ -64,7 +68,7 @@ def download_pdf_into_memory(url, loc, domain_id, timeout=30, allow_insecure_ret
         # Retry without certificate verification
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         try:
-            resp = requests.get(url, timeout=timeout, verify=False)
+            resp = requests.get(url, headers=DEFAULT_HEADERS, timeout=timeout, verify=False)
             resp.raise_for_status()
             return resp.content
         except requests.exceptions.RequestException as e2:

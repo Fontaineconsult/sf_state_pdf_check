@@ -13,6 +13,10 @@ from data_export import get_pdfs_by_site_name
 from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import box_share_pattern_match, download_from_box
 from set_env import get_database_path
 
+DEFAULT_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+}
+
 def check_box_pdf_status(pdf_uri):
     """
     For a Box share link, obtain the direct download URL and check its status.
@@ -31,7 +35,7 @@ def check_box_pdf_status(pdf_uri):
         return False, None
 
     try:
-        response = requests.head(download_url, timeout=10, allow_redirects=False)
+        response = requests.head(download_url, headers=DEFAULT_HEADERS, timeout=10, allow_redirects=False)
         print(f"Initial Box HEAD status for URL {download_url}: {response.status_code}")
     except requests.exceptions.RequestException as e:
         print(f"Error fetching Box PDF download URL ({download_url}): {e}")
@@ -42,7 +46,7 @@ def check_box_pdf_status(pdf_uri):
         if new_url:
             print(f"Following redirect to: {new_url}")
             try:
-                final_response = requests.head(new_url, timeout=10)
+                final_response = requests.head(new_url, headers=DEFAULT_HEADERS, timeout=10)
                 print(f"Final Box HEAD status for URL {new_url}: {final_response.status_code}")
                 return final_response.status_code == 200, final_response.status_code
             except requests.exceptions.RequestException as e:
@@ -115,7 +119,7 @@ def refresh_status(box_only=False, site=None):
                 # Regular PDF URI check
                 try:
                     print(f"Checking PDF URL: {pdf_uri}")
-                    pdf_response = requests.head(pdf_uri, timeout=10)
+                    pdf_response = requests.head(pdf_uri, headers=DEFAULT_HEADERS, timeout=10)
                     print(f"PDF URL status code: {pdf_response.status_code}")
                     if pdf_response.status_code == 404:
                         cursor.execute("UPDATE drupal_pdf_files SET pdf_returns_404 = ? WHERE id = ?", (1, pdf_id))
@@ -128,7 +132,7 @@ def refresh_status(box_only=False, site=None):
             # Check Parent URL status using HEAD request for non-box_only mode
             try:
                 print(f"Checking Parent URL: {pdf_parent}")
-                parent_response = requests.head(pdf_parent, timeout=10)
+                parent_response = requests.head(pdf_parent, headers=DEFAULT_HEADERS, timeout=10)
                 print(f"Parent URL status code: {parent_response.status_code}")
                 if parent_response.status_code == 404:
                     cursor.execute("UPDATE drupal_pdf_files SET parent_returns_404 = ? WHERE id = ?", (1, pdf_id))
