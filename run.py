@@ -95,9 +95,9 @@ def run_single_spider(spider_name):
     return True
 
 
-def run_pdf_reports():
+def run_pdf_reports(deep_conformance=False):
     """Run PDF accessibility verification."""
-    create_all_pdf_reports()
+    create_all_pdf_reports(deep_conformance=deep_conformance)
     clear_completed_conformance()  # Clear tracking after successful run
     return True
 
@@ -248,6 +248,7 @@ def main():
     parser.add_argument('--spiders', action='store_true', help='Run web spiders')
     parser.add_argument('--spider', type=str, metavar='NAME', help='Run a single spider by name')
     parser.add_argument('--pdf-reports', action='store_true', help='Run PDF accessibility verification for all sites')
+    parser.add_argument('--deep-conformance', action='store_true', help='Re-download and re-scan all existing PDFs (use with --pdf-reports)')
     parser.add_argument('--pdf-report', type=str, metavar='DOMAIN', help='Run PDF accessibility verification for a single domain (e.g., access.sfsu.edu)')
     parser.add_argument('--html-report', action='store_true', help='Generate HTML accessibility report')
     parser.add_argument('--month', type=str, metavar='MONTH', help='Month to use in HTML report (e.g., "January 2025")')
@@ -274,7 +275,7 @@ def main():
     elif args.spider:
         run_single_spider(args.spider)
     elif args.pdf_reports:
-        run_pdf_reports()
+        run_pdf_reports(deep_conformance=args.deep_conformance)
     elif args.pdf_report:
         run_single_pdf_report(args.pdf_report)
     elif args.html_report:

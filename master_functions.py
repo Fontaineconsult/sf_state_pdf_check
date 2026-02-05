@@ -110,7 +110,7 @@ def count_high_priority_pdfs():
 #
 
 
-def create_all_pdf_reports():
+def create_all_pdf_reports(deep_conformance=False):
     """
     Initiates a full PDF scan for all subdirectories within the specified folder.
 
@@ -127,7 +127,7 @@ def create_all_pdf_reports():
         d. Adds the report to the database by calling the `add_pdf_file_to_database` function if successful, or logs a failure by calling the `add_pdf_report_failure` function if not.
 
     Parameters:
-    None
+    deep_conformance (bool): If True, re-downloads and re-scans all existing PDFs. Defaults to False.
 
     Returns:
     None
@@ -144,10 +144,12 @@ def create_all_pdf_reports():
     refresh_status()
     # compare the pdfs in the folder to the database and mark as removed if not in the folder
     mark_pdfs_as_removed(pdf_sites_folder)
-    # refresh_existing_pdf_reports
-    update_archives()
-    refresh_existing_pdf_reports()
     # update archive status
+    update_archives()
+    # refresh existing pdf reports (re-download and re-scan all PDFs)
+    if deep_conformance:
+        print("Deep conformance enabled - refreshing all existing PDF reports...")
+        refresh_existing_pdf_reports()
 
 
 
