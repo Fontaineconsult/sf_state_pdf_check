@@ -292,9 +292,19 @@ def mark_pdfs_as_removed(site_folders):
         if domain_id is not None:
             pdf_locations = loop_through_files_in_folder(os.path.join(site_folders, folder))
 
-            # If no scan file exists or is empty, skip this site to avoid marking all PDFs as removed
-            if not pdf_locations:
-                print(f"No scanned_pdfs.txt found or empty for {folder}, skipping removal check")
+            # If no scan file exists, skip this site
+            if pdf_locations is None:
+                print(f"No scanned_pdfs.txt found for {folder}, skipping removal check")
+                raw_pdf_scan_set.clear()
+                existing_pdfs_set.clear()
+                existing_pdfs_map.clear()
+                continue
+
+            # If scan file exists but is empty, mark all existing PDFs as removed
+            if len(pdf_locations) == 0:
+                print(f"Empty scanned_pdfs.txt for {folder}, marking all as removed")
+                for original_pdf_uri, original_parent_uri in existing_pdfs_map.values():
+                    mark_pdf_as_removed(original_pdf_uri, original_parent_uri)
                 raw_pdf_scan_set.clear()
                 existing_pdfs_set.clear()
                 existing_pdfs_map.clear()
@@ -344,9 +354,16 @@ def mark_single_site_pdfs_as_removed(site_folder):
     raw_pdf_scan_set = set()
     pdf_locations = loop_through_files_in_folder(site_folder)
 
-    # If no scan file exists or is empty, skip removal to avoid marking all PDFs as removed
-    if not pdf_locations:
-        print(f"No scanned_pdfs.txt found or empty for {domain_name}, skipping removal check")
+    # If no scan file exists, skip this site
+    if pdf_locations is None:
+        print(f"No scanned_pdfs.txt found for {domain_name}, skipping removal check")
+        return
+
+    # If scan file exists but is empty, mark all existing PDFs as removed
+    if len(pdf_locations) == 0:
+        print(f"Empty scanned_pdfs.txt for {domain_name}, marking all as removed")
+        for original_pdf_uri, original_parent_uri in existing_pdfs_map.values():
+            mark_pdf_as_removed(original_pdf_uri, original_parent_uri)
         return
 
     for file in pdf_locations:
