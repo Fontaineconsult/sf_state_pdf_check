@@ -29,6 +29,9 @@ from sites import generate_spiders
 # Import archive update function
 from update_archived import update_archives, update_archives_for_domain
 
+# Import 404 status check function
+from scan_refresh import refresh_status
+
 COMPLETED_SPIDERS_FILE = 'sf_state_pdf_scan/sf_state_pdf_scan/completed_spiders.txt'
 COMPLETED_CONFORMANCE_FILE = get_project_path('completed_conformance')
 
@@ -132,6 +135,27 @@ def run_update_archives_domain(domain_name):
     return True
 
 
+def run_check_404():
+    """Check 404 status for all PDFs and parent URLs."""
+    print("\nChecking 404 status for all PDFs...")
+    refresh_status()
+    return True
+
+
+def run_check_404_site(domain):
+    """Check 404 status for PDFs from a specific domain."""
+    print(f"\nChecking 404 status for domain: {domain}")
+    refresh_status(site=domain)
+    return True
+
+
+def run_check_404_box_only():
+    """Check 404 status for Box links only."""
+    print("\nChecking 404 status for Box links only...")
+    refresh_status(box_only=True)
+    return True
+
+
 def run_full_cycle():
     """Run a complete cycle of all three components."""
     print("\n=== Starting Full Cycle ===")
@@ -197,6 +221,9 @@ def main():
     parser.add_argument('--conformance-progress', action='store_true', help='Show the number of completed conformance scans')
     parser.add_argument('--update-archives', action='store_true', help='Update archived status for all PDFs in the database')
     parser.add_argument('--update-archive', type=str, metavar='DOMAIN', help='Update archived status for a single domain (e.g., retire.sfsu.edu)')
+    parser.add_argument('--check-404', action='store_true', help='Check 404 status for all PDFs and parent URLs')
+    parser.add_argument('--check-404-site', type=str, metavar='DOMAIN', help='Check 404 status for a single domain (e.g., access.sfsu.edu)')
+    parser.add_argument('--check-404-box', action='store_true', help='Check 404 status for Box links only')
 
     args = parser.parse_args()
 
@@ -225,6 +252,12 @@ def main():
         run_update_archives()
     elif args.update_archive:
         run_update_archives_domain(args.update_archive)
+    elif args.check_404:
+        run_check_404()
+    elif args.check_404_site:
+        run_check_404_site(args.check_404_site)
+    elif args.check_404_box:
+        run_check_404_box_only()
     else:
         parser.print_help()
 
