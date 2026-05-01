@@ -5,8 +5,27 @@ import re
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import get_box_contents
+from sf_state_pdf_scan.sf_state_pdf_scan.box_handler import get_box_contents, box_share_pattern_match
 from set_env import get_database_path
+
+
+_box_filename_cache = {}
+
+
+def _box_filename_for(pdf_uri):
+    """Return the Box filename for a Box share URL, or None if not Box / unavailable."""
+    if not pdf_uri or not box_share_pattern_match(pdf_uri):
+        return None
+    if pdf_uri in _box_filename_cache:
+        return _box_filename_cache[pdf_uri]
+    try:
+        result = get_box_contents(pdf_uri)
+        name = result[2] if result and result[0] and len(result) > 2 else None
+    except Exception as e:
+        print(f"  Error fetching Box filename for {pdf_uri}: {e}")
+        name = None
+    _box_filename_cache[pdf_uri] = name
+    return name
 
 
 def is_archived(pdf_uri, parent_uri, box_filename=None):
@@ -434,7 +453,7 @@ def update_archives():
     # Process each record
     for pdf_id, pdf_uri, parent_uri in records:
         # Check if archived
-        if is_archived(pdf_uri, parent_uri):
+        if is_archived(pdf_uri, parent_uri, _box_filename_for(pdf_uri)):
             # Only update if it should be archived (already set all to 0)
             cursor.execute("UPDATE drupal_pdf_files SET pdf_is_archived = 1 WHERE id = ?",
                           (pdf_id,))
@@ -487,7 +506,7 @@ def update_archives_for_domain(domain_name):
     # Process each record
     for pdf_id, pdf_uri, parent_uri in records:
         # Check if archived
-        if is_archived(pdf_uri, parent_uri):
+        if is_archived(pdf_uri, parent_uri, _box_filename_for(pdf_uri)):
             cursor.execute("UPDATE drupal_pdf_files SET pdf_is_archived = 1 WHERE id = ?",
                           (pdf_id,))
             updated_count += 1
@@ -539,10 +558,14 @@ def test_url(page_url, pdf_url=None):
     # Test is_archived() on the specific PDF if provided
     if pdf_url:
         print(f"Testing is_archived() for PDF: {pdf_url}")
-        url_based = is_archived(pdf_url, page_url)
+        box_name = _box_filename_for(pdf_url)
+        if box_name:
+            print(f"  Box filename: {box_name}")
+        url_based = is_archived(pdf_url, page_url, box_name)
         print(f"  URL-based is_archived(): {url_based}")
         results['is_archived_results'].append({
             'pdf_url': pdf_url,
+            'box_filename': box_name,
             'url_based_archived': url_based
         })
 
@@ -610,7 +633,7 @@ def test_url(page_url, pdf_url=None):
         for pdf in pdfs:
             print(f"  - {pdf}")
             # Also test is_archived on each found PDF
-            url_based = is_archived(pdf, page_url)
+            url_based = is_archived(pdf, page_url, _box_filename_for(pdf))
             results['is_archived_results'].append({
                 'pdf_url': pdf,
                 'url_based_archived': url_based,
@@ -621,10 +644,16 @@ def test_url(page_url, pdf_url=None):
         print(f"Error: {str(e)}")
         results['error'] = str(e)
 
+    archived_hits = [r for r in results['is_archived_results'] if r.get('url_based_archived')]
+
     print(f"\n{'='*60}")
     print("Summary:")
     print(f"  Archive markers found: {len(results['archive_markers_found'])}")
     print(f"  PDFs in archive sections: {len(results['pdfs_in_archive_sections'])}")
+    print(f"  PDFs flagged archived by is_archived(): {len(archived_hits)} / {len(results['is_archived_results'])}")
+    for hit in archived_hits:
+        label = hit.get('box_filename') or hit['pdf_url']
+        print(f"    - ARCHIVED: {label}")
     print(f"{'='*60}\n")
 
     return results
@@ -640,6 +669,7 @@ if __name__ == "__main__":
     else:
         # Default test
         test_url(
-            "https://retire.sfsu.edu/news-and-events",
-            "https://retire.sfsu.edu/sites/default/files/documents/SFSU_RetirementAssoc.May_2024_Final_0.pdf"
+            "https://qaservices.sfsu.edu/incident-management",
+            "https://qaservices.sfsu.edu/sites/default/files/documents/Incident-Response-Procedures-v5.pdf"
+
         )
