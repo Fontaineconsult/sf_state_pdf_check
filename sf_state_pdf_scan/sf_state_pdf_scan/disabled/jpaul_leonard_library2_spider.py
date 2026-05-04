@@ -1,7 +1,7 @@
 
 # -*- coding: utf-8 -*-
 import os
-    
+
 import scrapy
 import re
 from scrapy.linkextractors import LinkExtractor
@@ -10,12 +10,13 @@ from scrapy import signals
 from datetime import datetime
 
 from ..box_handler import get_box_contents
+from set_env import get_box_path
 
 
 class JPaulLeonardLibrary2Spider(scrapy.Spider):
     name = 'jpaul_leonard_library2_spider'
     start_urls = ['https://m.library.sfsu.edu']
-    output_folder = r'C:\Users\913678186\Box\ATI\PDF Accessibility\SF State Website PDF Scans\m-library-sfsu-edu'
+    save_folder = 'm-library-sfsu-edu'
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -25,6 +26,7 @@ class JPaulLeonardLibrary2Spider(scrapy.Spider):
 
     def __init__(self):
         super().__init__()
+        self.output_folder = os.path.join(get_box_path('pdf_scans'), self.save_folder)
         self.matched_links = []  # Store matched links, if needed
         self.pdf_links = []      # Store PDF links as tuples (pdf_url, referrer_url)
         self.failed_box_links = []  # Store Box links that failed to resolve

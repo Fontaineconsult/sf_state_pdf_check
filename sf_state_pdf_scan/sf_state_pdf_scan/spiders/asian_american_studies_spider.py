@@ -1,7 +1,7 @@
 
 # -*- coding: utf-8 -*-
 import os
-    
+
 import scrapy
 import re
 from scrapy.linkextractors import LinkExtractor
@@ -10,12 +10,17 @@ from scrapy import signals
 from datetime import datetime
 
 from ..box_handler import get_box_contents
+from set_env import get_box_path
 
 
 class AsianAmericanStudiesSpider(scrapy.Spider):
     name = 'asian_american_studies_spider'
     start_urls = ['https://aas.sfsu.edu']
-    output_folder = r'C:\Users\Fonta\Box\ATI\PDF Accessibility\SF State Website PDF Scans\aas-sfsu-edu'
+    save_folder = 'aas-sfsu-edu'
+
+    custom_settings = {
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    }
 
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
@@ -25,6 +30,7 @@ class AsianAmericanStudiesSpider(scrapy.Spider):
 
     def __init__(self):
         super().__init__()
+        self.output_folder = os.path.join(get_box_path('pdf_scans'), self.save_folder)
         self.matched_links = []  # Store matched links, if needed
         self.pdf_links = []      # Store PDF links as tuples (pdf_url, referrer_url)
         self.failed_box_links = []  # Store Box links that failed to resolve
